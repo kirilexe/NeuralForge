@@ -1,8 +1,8 @@
 
-import LoginPage from './components/auth/login';
+import HomePage from './pages/Home';
 
 function App() {
-  return <LoginPage />;
+  return <HomePage />;
 }
 
 export default App
