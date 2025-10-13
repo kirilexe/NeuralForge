@@ -1,16 +1,50 @@
 import React from "react";
 
-interface TrainViewProps {
-	onTestClick?: () => void;
+export default function TrainView() {
+  return (
+    <div>
+      <h1>Train</h1>
+      <div style={{ display: "flex", gap: "2rem" }}>
+        <div>
+          <h2>Training Configuration</h2>
+          <div>
+            <label>
+              Epochs:
+              <input type="number" defaultValue={10} />
+            </label>
+          </div>
+          <div>
+            <label>
+              Batch Size:
+              <input type="number" defaultValue={64} />
+            </label>
+          </div>
+          <div>
+            <label>
+              Learning Rate:
+              <input type="number" step="0.0001" defaultValue={0.001} />
+            </label>
+          </div>
+          <div>
+            <label>
+              Optimizer:
+              <select>
+                <option>Adam</option>
+                <option>SGD</option>
+              </select>
+            </label>
+          </div>
+        </div>
+        <div>
+          <h2>Training Progress</h2>
+          <div>
+            <p>Training complete. View results below.</p>
+            <div>
+              <p>[accuracy/loss chart placeholder]</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
-
-const TrainView: React.FC<TrainViewProps> = ({ onTestClick }) => {
-	return (
-		<div>
-			<h2>Train Model</h2>
-			<button onClick={onTestClick}>Proceed to Testing</button>
-		</div>
-	);
-};
-
-export { TrainView };

@@ -2,5 +2,8 @@
   "dependencies": {
     "@gsap/react": "^2.1.2",
     "gsap": "^3.13.0"
+  },
+  "devDependencies": {
+    "vite": "^7.1.9"
   }
 }

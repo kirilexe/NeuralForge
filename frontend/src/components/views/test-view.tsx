@@ -1,12 +1,24 @@
 import React from "react";
 
-const TestView: React.FC = () => {
-	return (
-		<div>
-			<h2>Test Model</h2>
-			<p>Testing functionality coming soon.</p>
-		</div>
-	);
-};
-
-export { TestView };
+export default function TestView() {
+  return (
+    <div>
+      <h1>Test</h1>
+      <div>
+        <h2>Test Results</h2>
+        <p>Final performance metrics of your trained model.</p>
+        <div style={{ display: "flex", gap: "2rem" }}>
+          <div>
+            <h3>Accuracy</h3>
+            <p>78.53%</p>
+          </div>
+          <div>
+            <h3>Loss</h3>
+            <p>0.5359</p>
+          </div>
+        </div>
+        <button>Generate Explainable Insights</button>
+      </div>
+    </div>
+  );
+}

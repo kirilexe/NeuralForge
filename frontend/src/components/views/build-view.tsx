@@ -1,16 +1,21 @@
 import React from "react";
+import ModelArchitecture from "../dashboard/ModelArchitecture";
+import DatasetSelector from "../dashboard/DatasetSelector";
+import SaveLoadPanel from "../dashboard/SaveLoadPanel";
 
-interface BuildViewProps {
-	onTrainClick?: () => void;
+export default function BuildView() {
+  return (
+    <div>
+      <h1>Build</h1>
+      <div style={{ display: "flex", gap: "2rem" }}>
+        <div>
+          <ModelArchitecture />
+        </div>
+        <div>
+          <DatasetSelector />
+          <SaveLoadPanel />
+        </div>
+      </div>
+    </div>
+  );
 }
-
-const BuildView: React.FC<BuildViewProps> = ({ onTrainClick }) => {
-	return (
-		<div>
-			<h2>Build Model</h2>
-			<button onClick={onTrainClick}>Proceed to Training</button>
-		</div>
-	);
-};
-
-export { BuildView };
