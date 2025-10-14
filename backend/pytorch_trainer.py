@@ -5,20 +5,18 @@ import torch.optim as optim
 from torchvision import datasets, transforms
 from torch.utils.data import DataLoader
 
-# Device configuration (use GPU if available)
+# gpu availability check
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 def build_dynamic_cnn(layers):
-    """Dynamically builds a PyTorch model based on the layer configuration."""
     model_layers = []
     
-    # Start with input shape/channels (assumes MNIST: [1, 28, 28])
     input_channels = 1
     
-    # Keep track of the feature map size after Convolutional layers (starts at 28)
+    # keep track of the feature map size after Convolutional layers (starts at 28)
     current_size = 28
     
-    # 1. Build Convolutional and Pooling layers
+    # create layers based on provided config
     for layer in layers:
         layer_type = layer.get('type')
         
@@ -27,11 +25,11 @@ def build_dynamic_cnn(layers):
             kernel_size = layer.get('kernelSize', 3)
             activation_name = layer.get('activation', 'ReLU')
 
-            # Add Conv2d layer
+            # add conv layer
             model_layers.append(nn.Conv2d(input_channels, out_channels, kernel_size, padding=1))
             input_channels = out_channels
             
-            # Add Activation
+            # add Activation
             if activation_name == 'ReLU':
                 model_layers.append(nn.ReLU())
             elif activation_name == 'Sigmoid':
@@ -39,7 +37,7 @@ def build_dynamic_cnn(layers):
             elif activation_name == 'Tanh':
                 model_layers.append(nn.Tanh())
                 
-            # Add Max Pooling to reduce size by half (standard practice in CNNs)
+            # add Max Pooling to reduce size by half
             model_layers.append(nn.MaxPool2d(kernel_size=2, stride=2))
             current_size //= 2
             
@@ -47,12 +45,9 @@ def build_dynamic_cnn(layers):
             # Stop processing Conv/Pool and prepare for the Flatten layer
             break
 
-    # 2. Add Flatten layer before Dense layers
-    # Calculate the size of the tensor after the last convolutional block
     flatten_size = input_channels * current_size * current_size
     model_layers.append(nn.Flatten())
-    
-    # 3. Build Fully Connected layers
+
     input_units = flatten_size
     is_after_flatten = False
     
@@ -65,11 +60,9 @@ def build_dynamic_cnn(layers):
             output_units = layer.get('units', 128)
             activation_name = layer.get('activation', 'ReLU')
 
-            # Add Linear layer (Fully Connected)
             model_layers.append(nn.Linear(input_units, output_units))
             input_units = output_units
-            
-            # Add Activation (Output layer uses Softmax, handled by CrossEntropyLoss implicitly)
+
             if layer_type == 'Fully Connected':
                 if activation_name == 'ReLU':
                     model_layers.append(nn.ReLU())
@@ -77,8 +70,7 @@ def build_dynamic_cnn(layers):
                     model_layers.append(nn.Sigmoid())
                 elif activation_name == 'Tanh':
                     model_layers.append(nn.Tanh())
-            
-    # Combine all layers into a sequential model
+
     return nn.Sequential(*model_layers)
 
 def train_model(layers, config):
@@ -90,9 +82,9 @@ def train_model(layers, config):
         transforms.Normalize((0.1307,), (0.3081,))
     ])
     
-    # Use a small subset of MNIST for faster simulation
+    # TODO add a database picker
     train_dataset = datasets.MNIST('./data', train=True, download=True, transform=transform)
-    # Use a much smaller portion for a quick demo to prevent timeouts
+    # WARNING uses a lot less images so it trains faster for demos
     subset_indices = torch.randperm(len(train_dataset))[:5000] 
     train_subset = torch.utils.data.Subset(train_dataset, subset_indices)
     
@@ -104,7 +96,6 @@ def train_model(layers, config):
     train_loader = DataLoader(train_subset, batch_size=batch_size, shuffle=True)
     test_loader = DataLoader(test_dataset, batch_size=1000, shuffle=False)
     
-    # --- Model Build and Setup ---
     try:
         model = build_dynamic_cnn(layers).to(DEVICE)
     except Exception as e:
@@ -120,7 +111,6 @@ def train_model(layers, config):
     else:
         optimizer = optim.Adam(model.parameters(), lr=0.001)
 
-    # --- Training Loop ---
     output_log = ["=================================================="]
     output_log.append(f"Model built with PyTorch on device: {DEVICE}")
     output_log.append(f"Training Config: Epochs={epochs}, Batch={batch_size}, Opt={optimizer_name}")
