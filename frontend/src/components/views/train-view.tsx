@@ -1,6 +1,6 @@
 // train-view.tsx
 import React, { useState, useCallback } from "react";
-import type { Layer } from "../dashboard/ModelArchitecture"; // FIXED: Use 'import type'
+import type { Layer } from '../../types/model'; // FIXED: use 'import type'
 
 const useModelArchitectureState = () => {
     const [layers, setLayers] = useState<Layer[]>([

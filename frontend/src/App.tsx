@@ -6,6 +6,9 @@ function App() {
   return (
     <>
       <Navbar />
+      <br></br> // todo fix this disgusting thing later
+      <br></br>
+      <br></br>
       <br></br>
       <Dashboard />
     </>
