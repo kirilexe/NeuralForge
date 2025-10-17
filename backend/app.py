@@ -1,18 +1,14 @@
-# app.py
-from flask import Flask, request, jsonify
-from flask_cors import CORS
-from pytorch_trainer import train_model
+from flask import Flask, request, jsonify, make_response
+from pytorch_trainer import train_model, load_temp_model, test_model, TEMP_MODEL_PATH
+import os
 
 app = Flask(__name__)
-CORS(app)  # Enable Cross-Origin Resource Sharing for React frontend
-
 
 @app.route('/train', methods=['POST'])
 def train_model_endpoint():
     data = request.get_json()
     model_layers = data.get('model_layers', [])
 
-    # Default training configuration
     default_config = {
         "epochs": 5,
         "batchSize": 64,
@@ -20,10 +16,8 @@ def train_model_endpoint():
     }
     training_config = data.get('training_config', default_config)
 
-    # ✅ Call the PyTorch training function
     output, final_loss, final_accuracy = train_model(model_layers, training_config)
 
-    # ✅ Return JSON response
     return jsonify({
         "status": "success",
         "output": output,
@@ -31,11 +25,37 @@ def train_model_endpoint():
         "accuracy": final_accuracy
     })
 
+@app.route('/test', methods=['POST'])
+def test_endpoint():
+    model = load_temp_model()
+
+    if model is None:
+        return jsonify({
+            "status": "error",
+            "message": "No trained model found. Please train a model first."
+        }), 400
+    
+    try:
+        image_bytes = test_model(model)
+        
+        # used to delete the model so you could only test it once, fix later.
+        # if os.path.exists(TEMP_MODEL_PATH):
+        #     os.remove(TEMP_MODEL_PATH)
+            
+        response = make_response(image_bytes)
+        response.headers.set('Content-Type', 'image/png')
+        response.headers.set('Content-Disposition', 'attachment', filename='classification.png')
+        return response
+    
+    except Exception as e:
+        return jsonify({
+            "status": "error", 
+            "message": f"An error occurred during model testing: {e}"
+        }), 500
 
 @app.route('/', methods=['GET'])
 def status():
-    return "Flask API is running! PyTorch backend is ready."
-
+    return "Backend is running. Flask ready API on"
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)

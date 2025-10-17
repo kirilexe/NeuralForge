@@ -1,9 +1,11 @@
-# pytorch_trainer.py
 import torch
 import torch.nn as nn
 import torch.optim as optim
 from torchvision import datasets, transforms
 from torch.utils.data import DataLoader
+import os
+
+TEMP_MODEL_PATH = './temp_model_state.pth'
 
 # gpu availability check
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -76,7 +78,6 @@ def build_dynamic_cnn(layers):
 def train_model(layers, config):
     """Loads data, builds model, and runs a basic PyTorch training loop."""
     
-    # --- Data Loading ---
     transform = transforms.Compose([
         transforms.ToTensor(),
         transforms.Normalize((0.1307,), (0.3081,))
@@ -134,7 +135,6 @@ def train_model(layers, config):
             
         epoch_loss = running_loss / len(train_subset)
         
-        # --- Validation (Test) Phase ---
         model.eval()
         correct = 0
         total = 0
@@ -151,5 +151,88 @@ def train_model(layers, config):
         final_loss, final_accuracy = epoch_loss, epoch_accuracy
         
         output_log.append(f"Epoch {epoch}/{epochs} - Loss: {final_loss:.4f}, Accuracy: {final_accuracy:.4f}")
+
+        save_data = {
+            'state_dict' : model.state_dict(),
+            'layers' : layers
+        }
+        torch.save(save_data, TEMP_MODEL_PATH)
         
     return output_log, final_loss, final_accuracy
+
+def load_temp_model():
+    """Loads the model state from the temporary file and rebuilds the model."""
+    if not os.path.exists(TEMP_MODEL_PATH):
+        return None
+    
+    # Load the saved state and architecture
+    saved_data = torch.load(TEMP_MODEL_PATH, map_location=DEVICE)
+    
+    # Rebuild the model architecture
+    model = build_dynamic_cnn(saved_data['layers']).to(DEVICE)
+    
+    # Load the trained weights
+    model.load_state_dict(saved_data['state_dict'])
+    model.eval() # Set model to evaluation mode
+    
+    return model
+
+def test_model(model):
+    transform = transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize((0.1307,), (0.3081,))
+    ])
+    
+    test_dataset = datasets.MNIST('./data', train=False, transform=transform)
+    test_loader = DataLoader(test_dataset, batch_size=100, shuffle=True)
+    
+    model.eval()
+
+    import matplotlib.pyplot as plt
+    import numpy as np
+    import random
+    import io
+    
+    classes = [str(i) for i in range(10)]
+    
+    def view_classification(image, probabilities):
+        probabilities = probabilities.data.numpy().squeeze()
+        fig, (ax1, ax2) = plt.subplots(figsize=(6, 9), ncols=2)
+        
+        mean = 0.1307
+        std = 0.3081
+        image_denorm = image * std + mean
+        
+        ax1.imshow(image_denorm.cpu().permute(1, 2, 0).squeeze(), cmap='gray')
+        ax1.axis('off')
+        
+        ax2.barh(np.arange(10), probabilities)
+        ax2.set_aspect(0.1)
+        ax2.set_yticks(np.arange(10))
+        ax2.set_yticklabels(classes)
+        ax2.set_title('Class Probability')
+        ax2.set_xlim(0, 1.1)
+        plt.tight_layout()
+        
+        # Save plot to bytes instead of showing it
+        buf = io.BytesIO()
+        plt.savefig(buf, format='png', dpi=100, bbox_inches='tight')
+        buf.seek(0)
+        plt.close(fig)  # Close the figure to free memory
+        return buf.getvalue()
+
+    images, labels = next(iter(test_loader))
+    image_number = random.randint(0, 99)
+
+    image = images[image_number]
+    actual_label = labels[image_number].item()
+    batched_image = image.unsqueeze(0).to(DEVICE)
+
+    with torch.no_grad():
+        outputs = model(batched_image)
+    
+    # FIX: Use softmax instead of exp to get proper probabilities
+    probabilities = torch.nn.functional.softmax(outputs, dim=1).squeeze().cpu()
+    
+    # Return the image bytes
+    return view_classification(image, probabilities)
