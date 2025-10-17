@@ -4,6 +4,12 @@ import torch.optim as optim
 from torchvision import datasets, transforms
 from torch.utils.data import DataLoader
 import os
+import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.use('Agg')
+import numpy as np
+import random
+import io
 
 TEMP_MODEL_PATH = './temp_model_state.pth'
 
@@ -187,15 +193,13 @@ def test_model(model):
     test_loader = DataLoader(test_dataset, batch_size=100, shuffle=True)
     
     model.eval()
-
-    import matplotlib.pyplot as plt
-    import numpy as np
-    import random
-    import io
     
     classes = [str(i) for i in range(10)]
     
     def view_classification(image, probabilities):
+        if matplotlib.pyplot.get_fignums():  # Check if figures exist
+            matplotlib.pyplot.close('all')  # Close all figures properly
+
         probabilities = probabilities.data.numpy().squeeze()
         fig, (ax1, ax2) = plt.subplots(figsize=(6, 9), ncols=2)
         
@@ -203,7 +207,7 @@ def test_model(model):
         std = 0.3081
         image_denorm = image * std + mean
         
-        ax1.imshow(image_denorm.cpu().permute(1, 2, 0).squeeze(), cmap='gray')
+        ax1.imshow(image_denorm.cpu().squeeze(), cmap='gray')
         ax1.axis('off')
         
         ax2.barh(np.arange(10), probabilities)
