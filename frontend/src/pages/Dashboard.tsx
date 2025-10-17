@@ -14,9 +14,15 @@ export default function Dashboard() {
         <button onClick={() => setTab("test")}>Test</button>
       </div>
       <div>
-        {tab === "build" && <BuildView />}
-        {tab === "train" && <TrainView />}
-        {tab === "test" && <TestView />}
+        <div style={{ display: tab === "build" ? "block" : "none" }}>
+          <BuildView />
+        </div>
+        <div style={{ display: tab === "train" ? "block" : "none" }}>
+          <TrainView />
+        </div>
+        <div style={{ display: tab === "test" ? "block" : "none" }}>
+          <TestView />
+        </div>
       </div>
     </div>
   );
