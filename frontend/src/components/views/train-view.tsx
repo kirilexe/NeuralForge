@@ -1,6 +1,7 @@
 // train-view.tsx
 import React, { useState, useCallback } from "react";
-import type { Layer } from '../../types/model'; // FIXED: use 'import type'
+import type { Layer } from '../../types/model'; 
+import { useModel } from '../../contexts/ModelContext'; 
 
 const useModelArchitectureState = () => {
     const [layers, setLayers] = useState<Layer[]>([
@@ -21,7 +22,7 @@ export default function TrainView() {
     optimizer: 'Adam',
   });
   
-  const { layers } = useModelArchitectureState();
+  const { layers } = useModel(); 
 
   const handleConfigChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;

@@ -1,28 +1,24 @@
-// ModelArchitecture.tsx
-import React, { useState } from 'react';
+// ModelArchitecture.tsx - UPDATED VERSION
+import React from 'react';
 import LayerConfig from './LayerComponent';
+import type { Layer } from '../../types/model'; // Import from your types file
 
-interface Layer {
-  id: number;
-  type: 'Convolutional' | 'Fully Connected';
-  outputChannels?: number;
-  kernelSize?: number;
-  activation?: 'ReLU' | 'Sigmoid' | 'Tanh';
-  units?: number;
+interface ModelArchitectureProps {
+  layers: Layer[];
+  setLayers: (layers: Layer[]) => void;
 }
 
-export default function ModelArchitecture() {
-  const [layers, setLayers] = useState<Layer[]>([
-    {
-      id: 1,
-      type: 'Convolutional',
-      outputChannels: 32,
-      kernelSize: 3,
-      activation: 'ReLU',
-    },
-  ]);
+export default function ModelArchitecture({ layers, setLayers }: ModelArchitectureProps) {
+  const [nextId, setNextId] = React.useState(layers.length + 1);
 
-  const [nextId, setNextId] = useState(2);
+  // ADD THIS FUNCTION: Update layer parameters
+  const updateLayer = (id: number, updates: Partial<Layer>) => {
+    setLayers(prevLayers => 
+      prevLayers.map(layer => 
+        layer.id === id ? { ...layer, ...updates } : layer
+      )
+    );
+  };
 
   const addConvolutionalLayer = () => {
     const newLayer: Layer = {
@@ -32,8 +28,7 @@ export default function ModelArchitecture() {
       kernelSize: 3,
       activation: 'ReLU',
     };
-    // Use a function in setLayers to ensure we get the latest state
-    setLayers(prevLayers => [...prevLayers, newLayer]);
+    setLayers([...layers, newLayer]);
     setNextId(nextId + 1);
   };
 
@@ -42,15 +37,14 @@ export default function ModelArchitecture() {
       id: nextId,
       type: 'Fully Connected',
       units: 128,
+      activation: 'ReLU',
     };
-    setLayers(prevLayers => [...prevLayers, newLayer]);
+    setLayers([...layers, newLayer]);
     setNextId(nextId + 1);
   };
 
-  // NEW FUNCTION: Removes a layer by its ID
   const removeLayer = (idToRemove: number) => {
-    // Create a new array that excludes the layer with the matching ID
-    setLayers(prevLayers => prevLayers.filter(layer => layer.id !== idToRemove));
+    setLayers(layers.filter(layer => layer.id !== idToRemove));
   };
 
   return (
@@ -66,13 +60,13 @@ export default function ModelArchitecture() {
             kernelSize={layer.kernelSize}
             activation={layer.activation}
             units={layer.units}
-            onRemove={removeLayer} // Pass the removal function to the child component
+            onRemove={removeLayer}
+            onUpdate={updateLayer} // ADD THIS PROP
           />
         ))}
       </div>
       <button onClick={addFullyConnectedLayer}>Add Fully Connected</button>
       <button onClick={addConvolutionalLayer}>Add Convolutional</button>
-      <button>Proceed to Training</button>
     </div>
   );
 }

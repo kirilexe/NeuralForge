@@ -1,6 +1,7 @@
 
 import Navbar from './components/header/Navbar';
 import Dashboard from './pages/Dashboard';
+import { ModelProvider } from './contexts/ModelContext';
 
 function App() {
   return (
@@ -10,7 +11,9 @@ function App() {
       <br></br>
       <br></br>
       <br></br>
-      <Dashboard />
+      <ModelProvider>
+        <Dashboard />
+      </ModelProvider>
     </>
   );
 }
