@@ -12,19 +12,16 @@ import random
 import io
 
 TEMP_MODEL_PATH = './temp_model_state.pth'
-
-# gpu availability check
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 def build_dynamic_cnn(layers):
     model_layers = []
     
+    # ALWAYS start with input layer for MNIST (1 channel, 28x28)
     input_channels = 1
-    
-    # keep track of the feature map size after Convolutional layers (starts at 28)
     current_size = 28
     
-    # create layers based on provided config
+    # Process user-defined middle layers
     for layer in layers:
         layer_type = layer.get('type')
         
@@ -33,11 +30,11 @@ def build_dynamic_cnn(layers):
             kernel_size = layer.get('kernelSize', 3)
             activation_name = layer.get('activation', 'ReLU')
 
-            # add conv layer
+            # Add conv layer
             model_layers.append(nn.Conv2d(input_channels, out_channels, kernel_size, padding=1))
             input_channels = out_channels
             
-            # add Activation
+            # Add activation
             if activation_name == 'ReLU':
                 model_layers.append(nn.ReLU())
             elif activation_name == 'Sigmoid':
@@ -45,39 +42,41 @@ def build_dynamic_cnn(layers):
             elif activation_name == 'Tanh':
                 model_layers.append(nn.Tanh())
                 
-            # add Max Pooling to reduce size by half
+            # Add Max Pooling to reduce size by half
             model_layers.append(nn.MaxPool2d(kernel_size=2, stride=2))
             current_size //= 2
             
-        elif layer_type in ('Fully Connected', 'Output'):
-            # Stop processing Conv/Pool and prepare for the Flatten layer
+        elif layer_type == 'Fully Connected':
+            # If we hit a FC layer, stop conv processing and flatten
             break
 
+    # Flatten before FC layers
     flatten_size = input_channels * current_size * current_size
     model_layers.append(nn.Flatten())
 
+    # Process FC layers (user-defined middle layers)
     input_units = flatten_size
-    is_after_flatten = False
-    
     for layer in layers:
         layer_type = layer.get('type')
         
-        if layer_type in ('Fully Connected', 'Output'):
-            is_after_flatten = True
-            
+        if layer_type == 'Fully Connected':
             output_units = layer.get('units', 128)
             activation_name = layer.get('activation', 'ReLU')
 
             model_layers.append(nn.Linear(input_units, output_units))
             input_units = output_units
 
-            if layer_type == 'Fully Connected':
-                if activation_name == 'ReLU':
-                    model_layers.append(nn.ReLU())
-                elif activation_name == 'Sigmoid':
-                    model_layers.append(nn.Sigmoid())
-                elif activation_name == 'Tanh':
-                    model_layers.append(nn.Tanh())
+            # Add activation for FC layers
+            if activation_name == 'ReLU':
+                model_layers.append(nn.ReLU())
+            elif activation_name == 'Sigmoid':
+                model_layers.append(nn.Sigmoid())
+            elif activation_name == 'Tanh':
+                model_layers.append(nn.Tanh())
+
+    # ALWAYS end with output layer for MNIST (10 classes)
+    model_layers.append(nn.Linear(input_units, 10))  # 10 classes for MNIST
+    model_layers.append(nn.Softmax(dim=1))
 
     return nn.Sequential(*model_layers)
 
@@ -89,9 +88,7 @@ def train_model(layers, config):
         transforms.Normalize((0.1307,), (0.3081,))
     ])
     
-    # TODO add a database picker
     train_dataset = datasets.MNIST('./data', train=True, download=True, transform=transform)
-    # WARNING uses a lot less images so it trains faster for demos
     subset_indices = torch.randperm(len(train_dataset))[:5000] 
     train_subset = torch.utils.data.Subset(train_dataset, subset_indices)
     
@@ -106,7 +103,7 @@ def train_model(layers, config):
     try:
         model = build_dynamic_cnn(layers).to(DEVICE)
     except Exception as e:
-        return [f"ERROR: Could not build model. Likely a size mismatch. Details: {e}"], 0.0, 0.0
+        return [f"ERROR: Could not build model. Details: {e}"], 0.0, 0.0
     
     criterion = nn.CrossEntropyLoss()
     optimizer_name = config.get('optimizer', 'Adam')
@@ -121,6 +118,7 @@ def train_model(layers, config):
     output_log = ["=================================================="]
     output_log.append(f"Model built with PyTorch on device: {DEVICE}")
     output_log.append(f"Training Config: Epochs={epochs}, Batch={batch_size}, Opt={optimizer_name}")
+    output_log.append(f"Architecture: Input → {len(layers)} user layers → Output(10 classes)")
     
     final_loss, final_accuracy = 0.0, 0.0
 
@@ -159,28 +157,23 @@ def train_model(layers, config):
         output_log.append(f"Epoch {epoch}/{epochs} - Loss: {final_loss:.4f}, Accuracy: {final_accuracy:.4f}")
 
         save_data = {
-            'state_dict' : model.state_dict(),
-            'layers' : layers
+            'state_dict': model.state_dict(),
+            'layers': layers
         }
         torch.save(save_data, TEMP_MODEL_PATH)
         
     return output_log, final_loss, final_accuracy
 
+# The rest of your functions (load_temp_model, test_model) remain the same
 def load_temp_model():
     """Loads the model state from the temporary file and rebuilds the model."""
     if not os.path.exists(TEMP_MODEL_PATH):
         return None
     
-    # Load the saved state and architecture
     saved_data = torch.load(TEMP_MODEL_PATH, map_location=DEVICE)
-    
-    # Rebuild the model architecture
     model = build_dynamic_cnn(saved_data['layers']).to(DEVICE)
-    
-    # Load the trained weights
     model.load_state_dict(saved_data['state_dict'])
-    model.eval() # Set model to evaluation mode
-    
+    model.eval()
     return model
 
 def test_model(model):
@@ -197,8 +190,8 @@ def test_model(model):
     classes = [str(i) for i in range(10)]
     
     def view_classification(image, probabilities):
-        if matplotlib.pyplot.get_fignums():  # Check if figures exist
-            matplotlib.pyplot.close('all')  # Close all figures properly
+        if matplotlib.pyplot.get_fignums():
+            matplotlib.pyplot.close('all')
 
         probabilities = probabilities.data.numpy().squeeze()
         fig, (ax1, ax2) = plt.subplots(figsize=(6, 9), ncols=2)
@@ -218,11 +211,10 @@ def test_model(model):
         ax2.set_xlim(0, 1.1)
         plt.tight_layout()
         
-        # Save plot to bytes instead of showing it
         buf = io.BytesIO()
         plt.savefig(buf, format='png', dpi=100, bbox_inches='tight')
         buf.seek(0)
-        plt.close(fig)  # Close the figure to free memory
+        plt.close(fig)
         return buf.getvalue()
 
     images, labels = next(iter(test_loader))
@@ -235,8 +227,16 @@ def test_model(model):
     with torch.no_grad():
         outputs = model(batched_image)
     
-    # FIX: Use softmax instead of exp to get proper probabilities
     probabilities = torch.nn.functional.softmax(outputs, dim=1).squeeze().cpu()
     
+    probabilities = torch.nn.functional.softmax(outputs, dim=1).squeeze().cpu()
+
+# Debug: Check the shape
+    print(f"Output shape: {outputs.shape}, Probabilities shape: {probabilities.shape}")
+
+    # Make sure probabilities has 10 elements (one per class)
+    if probabilities.dim() == 0:
+        probabilities = torch.nn.functional.softmax(outputs, dim=1).squeeze(0).cpu()
+        
     # Return the image bytes
     return view_classification(image, probabilities)
