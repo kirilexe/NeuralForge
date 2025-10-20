@@ -1,12 +1,9 @@
-
-import Navbar from "../components/header/Navbar";
 import TextType from "../components/home/TextType";
 import "./Home.css";
 
 function HomePage() {
   return (
     <div className="home-root">
-      <Navbar />
       <div className="home-content">
         {/* add content here */}
         <TextType 
