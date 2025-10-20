@@ -16,7 +16,6 @@ export default function BuildView() {
         </div>
         <div>
           <DatasetSelector />
-          <SaveLoadPanel />
         </div>
       </div>
     </div>
