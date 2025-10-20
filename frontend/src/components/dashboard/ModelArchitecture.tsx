@@ -1,7 +1,7 @@
-// ModelArchitecture.tsx - UPDATED VERSION
+// ModelArchitecture.tsx - FIXED VERSION
 import React from 'react';
 import LayerConfig from './LayerComponent';
-import type { Layer } from '../../types/model'; // Import from your types file
+import type { Layer } from '../../types/model';
 
 interface ModelArchitectureProps {
   layers: Layer[];
@@ -9,15 +9,14 @@ interface ModelArchitectureProps {
 }
 
 export default function ModelArchitecture({ layers, setLayers }: ModelArchitectureProps) {
-  const [nextId, setNextId] = React.useState(layers.length + 1);
+  const [nextId, setNextId] = React.useState<number>(layers.length + 1);
 
-  // ADD THIS FUNCTION: Update layer parameters
+  // FIXED: Use the current layers directly instead of functional update
   const updateLayer = (id: number, updates: Partial<Layer>) => {
-    setLayers(prevLayers => 
-      prevLayers.map(layer => 
-        layer.id === id ? { ...layer, ...updates } : layer
-      )
+    const updatedLayers = layers.map(layer => 
+      layer.id === id ? { ...layer, ...updates } : layer
     );
+    setLayers(updatedLayers);
   };
 
   const addConvolutionalLayer = () => {
@@ -61,7 +60,6 @@ export default function ModelArchitecture({ layers, setLayers }: ModelArchitectu
             activation={layer.activation}
             units={layer.units}
             onRemove={removeLayer}
-            onUpdate={updateLayer} // ADD THIS PROP
           />
         ))}
       </div>

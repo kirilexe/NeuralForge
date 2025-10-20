@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { doCreateUserWithEmailAndPassword, doSignOut } from '../../../firebase/auth';
+import { doSignInWithEmailAndPassword, doSignOut } from '../../../firebase/auth';
 
 const LoginPage: React.FC = () => {
 	const [email, setEmail] = useState('');
@@ -11,7 +11,7 @@ const LoginPage: React.FC = () => {
 		e.preventDefault();
 		setError(null);
 		try {
-			const userCredential = await doCreateUserWithEmailAndPassword(email, password);
+			const userCredential = await doSignInWithEmailAndPassword(email, password);
 			setUser(userCredential.user);
 		} catch (err: any) {
 			setError(err.message);
@@ -25,7 +25,7 @@ const LoginPage: React.FC = () => {
 
 	return (
 		<div style={{ maxWidth: 400, margin: 'auto', padding: 32 }}>
-			<h2>Login / Register</h2>
+			<h2>Login</h2>
 			{user ? (
 				<div>
 					<p>Welcome, {user.email}!</p>
@@ -54,7 +54,7 @@ const LoginPage: React.FC = () => {
 						/>
 					</div>
 					{error && <div style={{ color: 'red', marginBottom: 16 }}>{error}</div>}
-					<button type="submit" style={{ width: '100%', padding: 10 }}>Login / Register</button>
+					<button type="submit" style={{ width: '100%', padding: 10 }}>Login</button>
 				</form>
 			)}
 		</div>

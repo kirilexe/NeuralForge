@@ -1,20 +1,49 @@
-
 import Navbar from './components/header/Navbar';
 import Dashboard from './pages/Dashboard';
+import Home from './pages/Home';
+import LoginPage from './components/auth/login/index';
+import RegisterPage from './components/auth/register/index';
 import { ModelProvider } from './contexts/ModelContext';
+import { useState, useEffect } from 'react';
 
 function App() {
+  const [currentPage, setCurrentPage] = useState('home');
+
+  // Sync with URL on initial load
+  useEffect(() => {
+    const path = window.location.pathname;
+    if (path === '/dashboard') setCurrentPage('dashboard');
+    else if (path === '/login') setCurrentPage('login');
+    else if (path === '/register') setCurrentPage('register');
+    else setCurrentPage('home');
+  }, []);
+
+  // Update URL when page changes
+  const navigate = (page: string) => {
+    setCurrentPage(page);
+    const path = page === 'home' ? '/' : `/${page}`;
+    window.history.pushState(null, '', path);
+  };
+
+  const renderPage = () => {
+    switch(currentPage) {
+      case 'dashboard':
+        return <Dashboard />;
+      case 'login':
+        return <LoginPage />;
+      case 'register':
+        return <RegisterPage />;
+      case 'home':
+      default:
+        return <Home />;
+    }
+  };
+
   return (
-    <>
-      <Navbar />
-      <br></br> // todo fix this disgusting thing later
-      <br></br>
-      <br></br>
-      <br></br>
-      <ModelProvider>
-        <Dashboard />
-      </ModelProvider>
-    </>
+    <ModelProvider>
+      <Navbar onNavigate={navigate} currentPage={currentPage} />
+      {renderPage()}
+    </ModelProvider>
   );
 }
 
