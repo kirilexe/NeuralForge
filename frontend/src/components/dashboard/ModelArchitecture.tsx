@@ -31,6 +31,7 @@ export default function ModelArchitecture({ layers, setLayers }: ModelArchitectu
     setNextId(nextId + 1);
   };
 
+
   const addFullyConnectedLayer = () => {
     const newLayer: Layer = {
       id: nextId,
@@ -45,6 +46,10 @@ export default function ModelArchitecture({ layers, setLayers }: ModelArchitectu
   const removeLayer = (idToRemove: number) => {
     setLayers(layers.filter(layer => layer.id !== idToRemove));
   };
+
+  function saveLayers(){
+    // todo
+  }
 
   return (
     <div>
