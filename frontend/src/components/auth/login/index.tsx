@@ -1,11 +1,24 @@
 import React, { useState } from 'react';
 import { doSignInWithEmailAndPassword, doSignOut } from '../../../firebase/auth';
+//@ts-ignore
+import {useAuth } from '../../../contexts/authContext/index';
 
 const LoginPage: React.FC = () => {
 	const [email, setEmail] = useState('');
 	const [password, setPassword] = useState('');
 	const [error, setError] = useState<string | null>(null);
 	const [user, setUser] = useState<any>(null);
+
+	const {currentUser} = useAuth();
+	
+		if (currentUser) {
+			return (
+				<div style={{ maxWidth: 400, margin: 'auto', padding: 32, textAlign: 'center' }}>
+					<h2>Already Logged In</h2>
+					<p>You are already signed in. Please log out to register a new account.</p>
+				</div>
+			)
+		}
 
 	const handleLogin = async (e: React.FormEvent) => {
 		e.preventDefault();

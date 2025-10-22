@@ -1,4 +1,6 @@
 import './Navbar.css'
+//@ts-ignore
+import { useAuth } from '../../contexts/authContext/index';
 
 interface NavbarProps {
   onNavigate: (page: string) => void;
@@ -6,6 +8,8 @@ interface NavbarProps {
 }
 
 function Navbar({ onNavigate, currentPage }: NavbarProps) {
+  const { currentUser } = useAuth();
+  
   const handleNavClick = (page: string, event: React.MouseEvent) => {
     event.preventDefault();
     onNavigate(page);
@@ -65,25 +69,41 @@ function Navbar({ onNavigate, currentPage }: NavbarProps) {
               aria-haspopup="true"
               aria-expanded="false"
             >
-              Auth
+              {currentUser ? `Welcome, ${currentUser.email}` : 'Auth'}
             </a>
             <div className="dropdown-menu" aria-labelledby="navbarDropdown">
-              <a 
-                className="dropdown-item" 
-                href="#"
-                onClick={(e) => handleNavClick('login', e)}
-              >
-                Login
-              </a>
-              <a 
-                className="dropdown-item" 
-                href="#"
-                onClick={(e) => handleNavClick('register', e)}
-              >
-                Register
-              </a>
+              {currentUser ? (
+                // Show when user IS logged in
+                <a 
+                  className="dropdown-item" 
+                  href="#"
+                  onClick={(e) => handleNavClick('signout', e)}
+                >
+                  Sign out
+                </a>
+              ) : (
+                // Show when user is NOT logged in
+                <>
+                  <a 
+                    className="dropdown-item" 
+                    href="#"
+                    onClick={(e) => handleNavClick('login', e)}
+                  >
+                    Login
+                  </a>
+                  <a 
+                    className="dropdown-item" 
+                    href="#"
+                    onClick={(e) => handleNavClick('register', e)}
+                  >
+                    Register
+                  </a>
+                </>
+              )}
               <div className="dropdown-divider"></div>
-              <a className="dropdown-item" href="#">Something else here</a>
+              <a className="dropdown-item" href="#">
+                {currentUser ? 'My Account' : 'Something else here'}
+              </a>
             </div>
           </li>
 
@@ -91,6 +111,13 @@ function Navbar({ onNavigate, currentPage }: NavbarProps) {
             <a className="nav-link disabled" href="#">Disabled</a>
           </li>
         </ul>
+        
+        {/* Optional: Show user email in navbar for logged-in users */}
+        {currentUser && (
+          <span className="navbar-text">
+            Signed in as: {currentUser.email}
+          </span>
+        )}
       </div>
     </nav>
   );

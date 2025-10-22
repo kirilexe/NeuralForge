@@ -3,6 +3,7 @@ import Dashboard from './pages/Dashboard';
 import Home from './pages/Home';
 import LoginPage from './components/auth/login/index';
 import RegisterPage from './components/auth/register/index';
+import SignOutPage from './components/auth/signout/index';
 import { ModelProvider } from './contexts/ModelContext';
 import { useState, useEffect } from 'react';
 //@ts-ignore
@@ -17,6 +18,7 @@ function App() {
     if (path === '/dashboard') setCurrentPage('dashboard');
     else if (path === '/login') setCurrentPage('login');
     else if (path === '/register') setCurrentPage('register');
+    else if (path === '/signout') setCurrentPage('signout');
     else setCurrentPage('home');
   }, []);
 
@@ -35,6 +37,8 @@ function App() {
         return <LoginPage />;
       case 'register':
         return <RegisterPage />;
+      case 'signout':
+        return <SignOutPage setCurrentPage={setCurrentPage} />;
       case 'home':
       default:
         return <Home />;
