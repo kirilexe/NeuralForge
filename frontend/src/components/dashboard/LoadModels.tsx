@@ -4,6 +4,7 @@ import { useModel } from '../../contexts/ModelContext';
 import { useAuth } from '../../contexts/authContext/index';
 import { collection, getDocs, orderBy, query } from 'firebase/firestore';
 import { db } from '../../firebase/firebase';
+import { doc, deleteDoc } from 'firebase/firestore';
 
 interface SavedModel {
   id: string;
@@ -56,6 +57,23 @@ export default function LoadModels() {
 
     setTimeout(() => setMessage(''), 3000);
   };
+
+const handleDeleteModel = async (modelId: string) => {
+  if (!currentUser) return;
+
+  try {
+    // Use the correct Firebase v9 syntax
+    const modelRef = doc(db, 'users', currentUser.uid, 'models', modelId);
+    await deleteDoc(modelRef);
+    
+    setSavedModels(prevModels => prevModels.filter(model => model.id !== modelId));
+    setMessage('Model deleted successfully');
+  } catch (error) {
+    console.error('Error deleting model:', error);
+    setMessage('Error deleting model');
+  }
+};
+
 
   if (!currentUser) {
     return (
@@ -117,6 +135,20 @@ export default function LoadModels() {
                   {model.createdAt?.toDate?.()?.toLocaleDateString() || 'Unknown date'}
                 </p>
               </div>
+              <button
+                onClick={() => handleDeleteModel(model.id)}
+                style={{
+                  padding: '6px 12px',
+                  backgroundColor: '#ff4444',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  marginLeft: '8px' // Add some spacing
+                }}
+              >
+                Delete
+              </button>
               <button
                 onClick={() => handleLoadModel(model)}
                 style={{
