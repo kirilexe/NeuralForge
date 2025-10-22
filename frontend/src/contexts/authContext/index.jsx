@@ -1,21 +1,25 @@
 import React, {useContext, useState, useEffect} from 'react';
-import { useEffect } from 'react';
 import {auth} from '../../firebase/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 
 const AuthContext = React.createContext();
 
 export function useAuth() {
-    return React.useContext(AuthContext);
+    const context = useContext(AuthContext);
+    if (context === undefined) {
+        throw new Error('useAuth must be used within an AuthProvider');
+    }
+    return context;
 }
 
 export function AuthProvider({ children }) {
-    const [currentUser, setCurrentUser] = React.useState(null);
-    const [userloggedin, setUserloggedin] = React.useState(false);
-    const [loading, setLoading] = React.useState(true);
+    const [currentUser, setCurrentUser] = useState(null);
+    const [userloggedin, setUserloggedin] = useState(false);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const unsubscribe = auth.onAuthStateChanged(auth, initializeUser);
+        // Fix: Remove the extra 'auth' parameter
+        const unsubscribe = onAuthStateChanged(auth, initializeUser);
         return unsubscribe;
     }, [])
 

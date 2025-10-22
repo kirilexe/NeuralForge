@@ -5,6 +5,8 @@ import LoginPage from './components/auth/login/index';
 import RegisterPage from './components/auth/register/index';
 import { ModelProvider } from './contexts/ModelContext';
 import { useState, useEffect } from 'react';
+//@ts-ignore
+import { AuthProvider } from './contexts/authContext/index';
 
 function App() {
   const [currentPage, setCurrentPage] = useState('home');
@@ -40,12 +42,14 @@ function App() {
   };
 
   return (
-    <ModelProvider>
-      <Navbar onNavigate={navigate} currentPage={currentPage} />
-      <main style={{ marginTop: '90px' }}> {/* Adjust based on navbar height */}
-      {renderPage()}
-      </main>
-    </ModelProvider>
+    <AuthProvider>
+      <ModelProvider>
+        <Navbar onNavigate={navigate} currentPage={currentPage} />
+        <main style={{ marginTop: '90px' }}> {/* Adjust based on navbar height */}
+        {renderPage()}
+        </main>
+      </ModelProvider>
+    </AuthProvider>
   );
 }
 
