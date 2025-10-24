@@ -47,13 +47,9 @@ export default function ModelArchitecture({ layers, setLayers }: ModelArchitectu
     setLayers(layers.filter(layer => layer.id !== idToRemove));
   };
 
-  function saveLayers(){
-    // todo
-  }
-
   return (
     <div>
-      <h2>Model Architecture</h2>
+      <h2>Neural Network Architecture</h2>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
         {layers.map(layer => (
           <LayerConfig

@@ -75,8 +75,8 @@ export default function TrainView() {
         <div style={{ width: '300px' }}>
           <h2>Training Configuration</h2>
           <div style={{ marginBottom: '15px', border: '1px solid #ddd', padding: '10px', borderRadius: '4px' }}>
-            <p>Model Params (Estimate): **{totalParams.toLocaleString()}**</p>
-            <p>Model Layers: **{layers.length}**</p>
+            <p>Neural Network Params (Estimate): **{totalParams.toLocaleString()}**</p>
+            <p>Neural Network Layers: **{layers.length}**</p>
           </div>
           
           <div style={{ marginBottom: '10px' }}>

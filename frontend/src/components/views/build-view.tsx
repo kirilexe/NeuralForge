@@ -10,7 +10,7 @@ export default function BuildView() {
 
   return (
     <div>
-      <h1>Build</h1>
+      <h1>Build your Neural Network</h1>
       <div style={{ display: "flex", gap: "2rem" }}>
         <div>
           <ModelArchitecture layers={layers} setLayers={setLayers} />

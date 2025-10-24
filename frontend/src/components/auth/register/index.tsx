@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { doCreateUserWithEmailAndPassword } from '../../../firebase/auth';
+//@ts-ignore
+import { useAuth } from '../../../contexts/authContext/index';
 
 const RegisterPage: React.FC = () => {
 	const [email, setEmail] = useState('');
@@ -7,6 +9,17 @@ const RegisterPage: React.FC = () => {
 	const [confirmPassword, setConfirmPassword] = useState('');
 	const [error, setError] = useState<string | null>(null);
 	const [success, setSuccess] = useState(false);
+
+	const {currentUser} = useAuth();
+
+	if (currentUser) {
+		return (
+			<div style={{ maxWidth: 400, margin: 'auto', padding: 32, textAlign: 'center' }}>
+				<h2>Already Logged In</h2>
+				<p>You are already signed in. Please log out to register a new account.</p>
+			</div>
+		)
+	}
 
 	const handleRegister = async (e: React.FormEvent) => {
 		e.preventDefault();
