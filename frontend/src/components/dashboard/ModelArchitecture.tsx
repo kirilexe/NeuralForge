@@ -1,4 +1,4 @@
-// ModelArchitecture.tsx - FIXED VERSION
+// ModelArchitecture.tsx 
 import React from 'react';
 import LayerConfig from './LayerComponent';
 import type { Layer } from '../../types/model';
@@ -11,7 +11,7 @@ interface ModelArchitectureProps {
 export default function ModelArchitecture({ layers, setLayers }: ModelArchitectureProps) {
   const [nextId, setNextId] = React.useState<number>(layers.length + 1);
 
-  // FIXED: Use the current layers directly instead of functional update
+  // use the current layers directly instead of functional update
   const updateLayer = (id: number, updates: Partial<Layer>) => {
     const updatedLayers = layers.map(layer => 
       layer.id === id ? { ...layer, ...updates } : layer
@@ -30,7 +30,6 @@ export default function ModelArchitecture({ layers, setLayers }: ModelArchitectu
     setLayers([...layers, newLayer]);
     setNextId(nextId + 1);
   };
-
 
   const addFullyConnectedLayer = () => {
     const newLayer: Layer = {
@@ -60,7 +59,9 @@ export default function ModelArchitecture({ layers, setLayers }: ModelArchitectu
             kernelSize={layer.kernelSize}
             activation={layer.activation}
             units={layer.units}
+            inputShape={layer.inputShape}
             onRemove={removeLayer}
+            onUpdate={updateLayer}
           />
         ))}
       </div>
