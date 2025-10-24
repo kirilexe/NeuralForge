@@ -15,7 +15,7 @@ export default function Dashboard() {
   return (
     <div>
       <div>
-        <button onClick={() => handleTabChange("build")}>Build</button>
+        <button className="" onClick={() => handleTabChange("build")}>Build</button>
         <button onClick={() => handleTabChange("train")}>Train</button>
         <button onClick={() => handleTabChange("test")}>Test</button>
       </div>
