@@ -36,24 +36,24 @@
 
 .navbar-nav .nav-link {
     color: #a0a0a0 !important; 
-    margin-left: 1.5rem; 
-    font-weight: 500;
-    font-size: 1rem;
-    padding: 0.5rem 0.75rem; 
-    border-radius: 0.5rem; 
-    transition: color 0.3s ease, background-color 0.3s ease, transform 0.2s ease;
+    margin-left: 1.5rem !important; 
+    font-weight: 500 !important;
+    font-size: 1rem !important;
+    padding: 0.5rem 0.75rem !important; 
+    border-radius: 0.5rem !important; 
+    transition: color 0.3s ease, background-color 0.3s ease, transform 0.2s ease !important;
 }
 
 .navbar-nav .nav-link:hover {
     color: #ffffff !important;
-    background-color: rgba(156, 107, 255, 0.1); 
-    transform: translateY(-2px); 
+    background-color: rgba(156, 107, 255, 0.1) !important; 
+    transform: translateY(-2px) !important; 
 }
 
 .navbar-nav .nav-link.active {
     color: #9c6bff !important;
-    background-color: rgba(156, 107, 255, 0.15); 
-    font-weight: 600; 
+    background-color: rgba(156, 107, 255, 0.15) !important; 
+    font-weight: 600 !important; 
 }
 
 .navbar-nav .nav-link.disabled {
@@ -64,26 +64,26 @@
 }
 
 .dropdown-menu {
-    background-color: #1c0033; 
-    border: 1px solid rgba(156, 107, 255, 0.2); 
-    border-bottom-left-radius: 0.75rem; 
-    border-bottom-right-radius: 0.75rem;
-    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.8), 0 0 20px rgba(156, 107, 255, 0.15); 
-    padding: 0.5rem 0;
-    backdrop-filter: blur(5px); 
+    background-color: #1c0033 !important; 
+    border: 1px solid rgba(156, 107, 255, 0.2) !important; 
+    border-bottom-left-radius: 0.75rem !important; 
+    border-bottom-right-radius: 0.75rem !important;
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.8), 0 0 20px rgba(156, 107, 255, 0.15) !important; 
+    padding: 0.5rem 0 !important;
+    backdrop-filter: blur(5px) !important; 
 }
 
 .dropdown-item {
-    color: #eee;
-    font-weight: 400;
-    padding: 0.6rem 1.5rem; 
-    transition: background-color 0.3s ease, color 0.2s ease, transform 0.2s ease;
+    color: #eee !important;
+    font-weight: 400 !important;
+    padding: 0.6rem 1.5rem !important; 
+    transition: background-color 0.3s ease, color 0.2s ease, transform 0.2s ease !important;
 }
 
 .dropdown-item:hover {
-    background-color: #2e0055; 
-    color: #fff;
-    transform: translateX(3px); 
+    background-color: #2e0055 !important; 
+    color: #fff !important;
+    transform: translateX(3px) !important; 
 }
 
 .dropdown-divider {
@@ -93,16 +93,16 @@
 }
 
 .navbar-toggler {
-    border-color: rgba(156, 107, 255, 0.5); 
-    padding: 0.5rem;
-    border-radius: 0.5rem;
-    transition: background-color 0.3s ease;
+    border-color: rgba(156, 107, 255, 0.5) !important; 
+    padding: 0.5rem !important;
+    border-radius: 0.5rem !important;
+    transition: background-color 0.3s ease !important;
 }
 
 .navbar-toggler:focus {
-    box-shadow: 0 0 0 0.25rem rgba(156, 107, 255, 0.5); 
+    box-shadow: 0 0 0 0.25rem rgba(156, 107, 255, 0.5) !important; 
 }
 
 .navbar-toggler-icon {
-    filter: invert(1); 
+    filter: invert(1) !important; 
 }

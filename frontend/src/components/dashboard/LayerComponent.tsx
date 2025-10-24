@@ -1,6 +1,5 @@
 import React from 'react';
 import type { Layer } from '../../types/model';
-//@ts-ignore
 
 interface LayerConfigProps extends Layer {
   onRemove: (id: number) => void;
@@ -31,98 +30,93 @@ export default function LayerComponent({
 
   const handleArrayInputChange = (field: keyof Layer, value: string, index: number) => {
     if (!inputShape) return;
-    
     const newArray = [...inputShape];
     const numValue = value === '' ? 0 : parseInt(value, 10);
-    
     if (!isNaN(numValue)) {
       newArray[index] = numValue;
       onUpdate(id, { [field]: newArray });
     }
   };
 
-  // Convert undefined activation to empty string for the dropdown
   const displayActivation = activation || '';
 
   return (
-    <div
-      style={{
-        border: '1px solid #ccc',
-        borderRadius: '8px',
-        padding: '10px',
-        width: '240px',
-        backgroundColor: '#f9f9f9',
-      }}
-    >
-      <h4>{type} Layer</h4>
-
-      {type === 'Convolutional' && (
+    <div className="w-full p-4 bg-[#0f0f0f] rounded-lg border border-[#2a2a2a] shadow-sm transition-all hover:border-purple-500/40">
+      <div className="flex items-center justify-between mb-3">
         <div>
-          <div style={{ marginBottom: '8px' }}>
-            <label>
-              <strong>Output Channels:</strong>
+          <h4 className="text-[#a78bfa] font-semibold text-base">{type} Layer</h4>
+          <p className="text-gray-500 text-xs mt-0.5">Layer {id}</p>
+        </div>
+        <button
+          onClick={() => onRemove(id)}
+          className="text-gray-400 hover:text-red-400 transition-colors duration-150 bg-[#1a1a1a] hover:bg-[#2a0000] rounded-md p-1.5"
+          title="Remove layer"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+            />
+          </svg>
+        </button>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        {type === 'Convolutional' && (
+          <>
+            <div>
+              <label className="block text-xs font-medium text-gray-400 mb-1">
+                Output Channels
+              </label>
               <input
                 type="number"
                 value={outputChannels || ''}
                 onChange={(e) => handleNumberInputChange('outputChannels', e.target.value)}
-                style={{
-                  width: '60px',
-                  marginLeft: '8px',
-                  padding: '4px',
-                  border: '1px solid #ccc',
-                  borderRadius: '4px',
-                }}
+                className="w-full px-3 py-1.5 bg-[#1a1a1a] text-white text-sm rounded-md 
+                           border border-transparent outline-none transition-all duration-150 
+                           hover:border-[#a78bfa] focus:border-[#a78bfa]"
                 min="1"
               />
-            </label>
-          </div>
-          <div style={{ marginBottom: '8px' }}>
-            <label>
-              <strong>Kernel Size:</strong>
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-gray-400 mb-1">
+                Kernel Size
+              </label>
               <input
                 type="number"
                 value={kernelSize || ''}
                 onChange={(e) => handleNumberInputChange('kernelSize', e.target.value)}
-                style={{
-                  width: '60px',
-                  marginLeft: '8px',
-                  padding: '4px',
-                  border: '1px solid #ccc',
-                  borderRadius: '4px',
-                }}
+                className="w-full px-3 py-1.5 bg-[#1a1a1a] text-white text-sm rounded-md 
+                           border border-transparent outline-none transition-all duration-150 
+                           hover:border-[#a78bfa] focus:border-[#a78bfa]"
                 min="1"
               />
-            </label>
-          </div>
-        </div>
-      )}
+            </div>
+          </>
+        )}
 
-      {type === 'Fully Connected' && (
+        {type === 'Fully Connected' && (
+          <div>
+            <label className="block text-xs font-medium text-gray-400 mb-1">Units</label>
+            <input
+              type="number"
+              value={units || ''}
+              onChange={(e) => handleNumberInputChange('units', e.target.value)}
+              className="w-full px-3 py-1.5 bg-[#1a1a1a] text-white text-sm rounded-md 
+                         border border-transparent outline-none transition-all duration-150 
+                         hover:border-[#a78bfa] focus:border-[#a78bfa]"
+              min="1"
+            />
+          </div>
+        )}
+
         <div>
-          <div style={{ marginBottom: '8px' }}>
-            <label>
-              <strong>Units:</strong>
-              <input
-                type="number"
-                value={units || ''}
-                onChange={(e) => handleNumberInputChange('units', e.target.value)}
-                style={{
-                  width: '80px',
-                  marginLeft: '8px',
-                  padding: '4px',
-                  border: '1px solid #ccc',
-                  borderRadius: '4px',
-                }}
-                min="1"
-              />
-            </label>
-          </div>
-        </div>
-      )}
-
-      <div style={{ marginBottom: '8px' }}>
-        <label>
-          <strong>Activation:</strong>
+          <label className="block text-xs font-medium text-gray-400 mb-1">
+            Activation Function
+          </label>
           <select
             value={displayActivation}
             onChange={(e) => {
@@ -130,12 +124,9 @@ export default function LayerComponent({
               //@ts-ignore
               handleInputChange('activation', newValue);
             }}
-            style={{
-              marginLeft: '8px',
-              padding: '4px',
-              border: '1px solid #ccc',
-              borderRadius: '4px',
-            }}
+            className="w-full px-3 py-1.5 bg-[#1a1a1a] text-white text-sm rounded-md 
+                       border border-transparent outline-none transition-all duration-150 
+                       hover:border-[#a78bfa] focus:border-[#a78bfa]"
           >
             <option value="">None</option>
             <option value="ReLU">ReLU</option>
@@ -143,46 +134,8 @@ export default function LayerComponent({
             <option value="Tanh">Tanh</option>
             <option value="Softmax">Softmax</option>
           </select>
-        </label>
-      </div>
-
-      {inputShape && (
-        <div style={{ marginBottom: '8px' }}>
-          <strong>Input Shape:</strong>
-          <div style={{ display: 'flex', gap: '4px', marginTop: '4px' }}>
-            {inputShape.map((dim, index) => (
-              <input
-                key={index}
-                type="number"
-                value={dim}
-                onChange={(e) => handleArrayInputChange('inputShape', e.target.value, index)}
-                style={{
-                  width: '40px',
-                  padding: '4px',
-                  border: '1px solid #ccc',
-                  borderRadius: '4px',
-                }}
-                min="1"
-              />
-            ))}
-          </div>
         </div>
-      )}
-
-      <button
-        onClick={() => onRemove(id)}
-        style={{
-          marginTop: '8px',
-          backgroundColor: '#ff6666',
-          color: 'white',
-          border: 'none',
-          borderRadius: '4px',
-          padding: '6px 12px',
-          cursor: 'pointer',
-        }}
-      >
-        Remove
-      </button>
+      </div>
     </div>
   );
 }

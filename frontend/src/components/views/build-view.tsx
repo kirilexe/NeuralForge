@@ -9,13 +9,13 @@ export default function BuildView() {
   const { layers, setLayers } = useModel();
 
   return (
-    <div>
-      <h1>Build your Neural Network</h1>
-      <div style={{ display: "flex", gap: "2rem" }}>
-        <div>
+    <div className="space-y-6 pl-8">
+      <h1 className="text-3xl font-bold text-white">Build your Neural Network</h1>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
           <ModelArchitecture layers={layers} setLayers={setLayers} />
         </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+        <div className="flex flex-col gap-6">
           <DatasetSelector />
           <SaveModel />
           <LoadModels />
