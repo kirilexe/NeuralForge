@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import BuildView from "../components/views/build-view";
 import TrainView from "../components/views/train-view";
 import TestView from "../components/views/test-view";
@@ -6,22 +6,38 @@ import Navbar from "../components/header/Navbar";
 
 export default function Dashboard() {
   const [tab, setTab] = useState<"build" | "train" | "test">("build");
+  const [underlineStyle, setUnderlineStyle] = useState({});
+  const refs = {
+    build: useRef<HTMLButtonElement>(null),
+    train: useRef<HTMLButtonElement>(null),
+    test: useRef<HTMLButtonElement>(null),
+  };
 
   const handleTabChange = (newTab: "build" | "train" | "test") => {
     setTab(newTab);
   };
 
+  useEffect(() => {
+    const el = refs[tab].current;
+    if (el) {
+      setUnderlineStyle({
+        width: `${el.offsetWidth}px`,
+        left: `${el.offsetLeft}px`,
+      });
+    }
+  }, [tab]);
+
   return (
     <div className="min-h-screen bg-[#0f172a]">
-      {/* Add padding-top to account for fixed navbar */}
       <div>
         {/* Tab Navigation */}
         <div className="sticky top-14 z-40 bg-[#1e293b]/95 backdrop-blur-md border-b border-white/10">
           <div className="max-w-7xl mx-auto px-6">
-            <div className="flex gap-1">
+            <div className="flex gap-1 relative">
               <button
+                ref={refs.build}
                 className={`px-6 py-3.5 text-sm font-medium relative
-                           transition-all duration-200 ease-out
+                           transition-colors duration-200
                            ${tab === "build"
                              ? "text-white"
                              : "text-white hover:text-white"
@@ -34,14 +50,12 @@ export default function Dashboard() {
                   </svg>
                   Build
                 </div>
-                {tab === "build" && (
-                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-500"></div>
-                )}
               </button>
               
               <button
+                ref={refs.train}
                 className={`px-6 py-3.5 text-sm font-medium relative
-                           transition-all duration-200 ease-out
+                           transition-colors duration-200
                            ${tab === "train"
                              ? "text-white"
                              : "text-gray-400 hover:text-white"
@@ -55,14 +69,12 @@ export default function Dashboard() {
                   </svg>
                   Train
                 </div>
-                {tab === "train" && (
-                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-500"></div>
-                )}
               </button>
               
               <button
+                ref={refs.test}
                 className={`px-6 py-3.5 text-sm font-medium relative
-                           transition-all duration-200 ease-out
+                           transition-colors duration-200
                            ${tab === "test"
                              ? "text-white"
                              : "text-gray-400 hover:text-white"
@@ -75,10 +87,13 @@ export default function Dashboard() {
                   </svg>
                   Test
                 </div>
-                {tab === "test" && (
-                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-500"></div>
-                )}
               </button>
+              
+              {/* ✅ Fixed Animated Underline */}
+              <div
+                className="absolute bottom-0 h-0.5 bg-indigo-500 transition-all duration-300 ease-in-out"
+                style={underlineStyle}
+              ></div>
             </div>
           </div>
         </div>
