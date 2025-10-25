@@ -110,6 +110,7 @@ function Navbar({ onNavigate, currentPage }: NavbarProps) {
                               py-1.5 z-50
                               animate-in fade-in slide-in-from-top-2 duration-200">
                   {currentUser ? (
+                    <>
                     <a
                       className="block px-4 py-2 text-sm text-gray-300
                                  transition-all duration-200 ease-out
@@ -121,6 +122,19 @@ function Navbar({ onNavigate, currentPage }: NavbarProps) {
                     >
                       Sign out
                     </a>
+                    <a
+                    className="block px-4 py-2 text-sm text-gray-300
+                               transition-all duration-200 ease-out
+                               hover:bg-white/5 hover:text-white 
+                               hover:shadow-[inset_0_0_12px_rgba(168,85,247,0.1)]
+                               rounded-lg mx-1"
+                    href="#"
+                    onClick={(e) => handleNavClick('profile', e)}
+                  >
+                    My Account
+                  </a>
+                    </>
+                    
                   ) : (
                     <>
                       <a
@@ -149,17 +163,6 @@ function Navbar({ onNavigate, currentPage }: NavbarProps) {
                   )}
                   
                   <div className="my-1.5 h-px bg-white/5"></div>
-                  
-                  <a
-                    className="block px-4 py-2 text-sm text-gray-300
-                               transition-all duration-200 ease-out
-                               hover:bg-white/5 hover:text-white 
-                               hover:shadow-[inset_0_0_12px_rgba(168,85,247,0.1)]
-                               rounded-lg mx-1"
-                    href="#"
-                  >
-                    {currentUser ? 'My Account' : 'Something else'}
-                  </a>
                 </div>
               )}
             </div>

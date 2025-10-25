@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { doSignInWithEmailAndPassword, doSignOut } from '../../../firebase/auth';
 //@ts-ignore
-import {useAuth } from '../../../contexts/authContext/index';
+import { useAuth } from '../../../contexts/authContext/index';
 
 const LoginPage: React.FC = () => {
 	const [email, setEmail] = useState('');
