@@ -14,7 +14,7 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-[#0f172a]">
       {/* Add padding-top to account for fixed navbar */}
-      <div className="pt-16">
+      <div>
         {/* Tab Navigation */}
         <div className="sticky top-14 z-40 bg-[#1e293b]/95 backdrop-blur-md border-b border-white/10">
           <div className="max-w-7xl mx-auto px-6">

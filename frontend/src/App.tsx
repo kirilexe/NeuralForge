@@ -49,7 +49,7 @@ function App() {
     <AuthProvider>
       <ModelProvider>
         <Navbar onNavigate={navigate} currentPage={currentPage} />
-        <main style={{ marginTop: '90px' }}> {/* Adjust based on navbar height */}
+        <main style={{ marginTop: '30px' }}> {/* Adjust based on navbar height */}
         {renderPage()}
         </main>
       </ModelProvider>
