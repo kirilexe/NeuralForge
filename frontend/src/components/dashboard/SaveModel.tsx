@@ -48,33 +48,25 @@ export default function SaveModel() {
     }
 
     return (
-        <div style={{ border: '1px solid #ccc', padding: '1rem', borderRadius: '8px' }}>
+        <div className="w-full p-4 bg-[#1e293b] rounded-xl border border-[#374151] shadow-2xl">
             <h3>Save Model</h3>
-            <div style={{ marginBottom: '1rem' }}>
+            <div>
                 <input
                     type="text"
                     placeholder="Enter model name"
                     value={modelName}
                     onChange={(e) => setModelName(e.target.value)}
-                    style={{
-                        padding: '8px',
-                        border: '1px solid #ddd',
-                        borderRadius: '4px',
-                        width: '200px',
-                        marginRight: '8px'
-                    }}
+                    className="w-full px-3 py-1.5 bg-[#1a1a1a] text-white text-sm rounded-md 
+                           border border-transparent outline-none transition-all duration-150 
+                           hover:border-[#a78bfa] focus:border-[#a78bfa] mb-2"
                 />
                 <button
                     onClick={handleSave}
                     disabled={isSaving || !modelName.trim()}
-                    style={{
-                        padding: '8px 16px',
-                        backgroundColor: '#4CAF50',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '4px',
-                        cursor: isSaving ? 'not-allowed' : 'pointer'
-                    }}
+                    className="px-4 py-2 text-sm font-medium bg-[#334155] hover:bg-[#3f4f62] 
+                     text-white rounded-lg
+                     transition-all duration-200 ease-out
+                     border border-white/5 hover:border-white/10"
                 >
                     {isSaving ? 'Saving...' : 'Save Model'}
                 </button>

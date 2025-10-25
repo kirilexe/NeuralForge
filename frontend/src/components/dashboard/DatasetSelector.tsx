@@ -4,13 +4,13 @@ export default function DatasetSelector() {
   return (
     <div>
       <h2>Dataset</h2>
-      <div>
+      <div className="w-full p-4 bg-[#1e293b] rounded-xl border border-[#374151] shadow-2xl">
         <label>
-          <input type="radio" name="dataset" defaultChecked />
+          <input className="m-1" type="radio" name="dataset" defaultChecked />
           MNIST (Default)
         </label>
         <label>
-          <input type="radio" name="dataset" />
+          <input className="m-1" type="radio" name="dataset" />
           Upload Custom Dataset
         </label>
       </div>
