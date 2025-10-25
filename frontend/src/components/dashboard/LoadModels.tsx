@@ -118,7 +118,7 @@ const handleDeleteModel = async (modelId: string) => {
               className="flex justify-between items-center p-4 bg-[#0f0f0f] rounded-lg border border-[#4a6380]/40 shadow-md transition-all hover:border-purple-500/40"
             >
               <div>
-                <strong className="text-white text-base font-medium block">{model.name}</strong>
+                <strong className="text-[#a78bfa] text-base font-medium block">{model.name}</strong>
                 <p className="mt-1 text-xs text-gray-400">
                   {model.layers.length} layers • 
                   {model.createdAt?.toDate?.()?.toLocaleDateString() || 'Unknown date'}
