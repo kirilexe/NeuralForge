@@ -74,9 +74,7 @@ export default function LayerComponent({
                 type="number"
                 value={outputChannels || ''}
                 onChange={(e) => handleNumberInputChange('outputChannels', e.target.value)}
-                className="w-full px-3 py-1.5 bg-[#1a1a1a] text-white text-sm rounded-md 
-                           border border-transparent outline-none transition-all duration-150 
-                           hover:border-[#a78bfa] focus:border-[#a78bfa]"
+                className="black-purple-hover"
                 min="1"
               />
             </div>
@@ -89,9 +87,7 @@ export default function LayerComponent({
                 type="number"
                 value={kernelSize || ''}
                 onChange={(e) => handleNumberInputChange('kernelSize', e.target.value)}
-                className="w-full px-3 py-1.5 bg-[#1a1a1a] text-white text-sm rounded-md 
-                           border border-transparent outline-none transition-all duration-150 
-                           hover:border-[#a78bfa] focus:border-[#a78bfa]"
+                className="black-purple-hover"
                 min="1"
               />
             </div>
@@ -105,9 +101,7 @@ export default function LayerComponent({
               type="number"
               value={units || ''}
               onChange={(e) => handleNumberInputChange('units', e.target.value)}
-              className="w-full px-3 py-1.5 bg-[#1a1a1a] text-white text-sm rounded-md 
-                         border border-transparent outline-none transition-all duration-150 
-                         hover:border-[#a78bfa] focus:border-[#a78bfa]"
+              className="black-purple-hover"
               min="1"
             />
           </div>
@@ -124,9 +118,7 @@ export default function LayerComponent({
               //@ts-ignore
               handleInputChange('activation', newValue);
             }}
-            className="w-full px-3 py-1.5 bg-[#1a1a1a] text-white text-sm rounded-md 
-                       border border-transparent outline-none transition-all duration-150 
-                       hover:border-[#a78bfa] focus:border-[#a78bfa]"
+            className="black-purple-hover"
           >
             <option value="">None</option>
             <option value="ReLU">ReLU</option>

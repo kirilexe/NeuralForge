@@ -1,6 +1,6 @@
 @import './components/header/Navbar.css'; 
-
 @import "tailwindcss";
+@tailwind utilities;
 
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
@@ -16,3 +16,26 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+/* TAILWIND COMPONENTS */
+@layer components {
+  .btn-transparent-white {
+    @apply flex items-center gap-2 px-4 py-2.5 bg-[#334155] hover:bg-[#3f4f62] 
+                     text-white text-sm font-medium rounded-lg
+                     transition-all duration-200 ease-out
+                     border border-white/5 hover:border-white/10;
+  }
+
+  .black-purple-hover {
+    @apply w-full px-3 py-1.5 bg-[#1a1a1a] text-white text-sm rounded-md 
+                           border border-transparent outline-none transition-all duration-150 
+                           hover:border-[#a78bfa] focus:border-[#a78bfa];
+  }
+
+  .black-purple-hover-div {
+    @apply w-full p-4 bg-[#0f0f0f] rounded-lg border border-[#2a2a2a] shadow-sm transition-all hover:border-purple-500/40
+  }
+
+}
+
+

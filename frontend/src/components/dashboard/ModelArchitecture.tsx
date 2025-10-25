@@ -86,10 +86,7 @@ export default function ModelArchitecture({ layers, setLayers }: ModelArchitectu
       <div className="flex gap-3 pt-4 border-t border-white/10">
         <button 
           onClick={addFullyConnectedLayer}
-          className="flex items-center gap-2 px-4 py-2.5 bg-[#334155] hover:bg-[#3f4f62] 
-                     text-white text-sm font-medium rounded-lg
-                     transition-all duration-200 ease-out
-                     border border-white/5 hover:border-white/10"
+          className="btn-transparent-white"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />

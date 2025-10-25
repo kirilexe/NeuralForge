@@ -70,11 +70,11 @@ export default function TrainView() {
 
   return (
     <div style={{ padding: '20px' }}>
-      <h1>Train</h1>
-      <div style={{ display: "flex", gap: "3rem" }}>
+      <h1 className="">Train</h1>
+      <div style={{ display: "flex", gap: "3rem" }} className="bg-[#1e293b] rounded-xl p-6 border border-white/10">
         <div style={{ width: '300px' }}>
           <h2>Training Configuration</h2>
-          <div style={{ marginBottom: '15px', border: '1px solid #ddd', padding: '10px', borderRadius: '4px' }}>
+          <div className="black-purple-hover-div">
             <p>Neural Network Params (Estimate): **{totalParams.toLocaleString()}**</p>
             <p>Neural Network Layers: **{layers.length}**</p>
           </div>
@@ -82,25 +82,25 @@ export default function TrainView() {
           <div style={{ marginBottom: '10px' }}>
             <label style={{ display: 'block' }}>
               Epochs:
-              <input type="number" name="epochs" value={config.epochs} onChange={handleConfigChange} disabled={isTraining} style={{ width: '100px', marginLeft: '10px' }} />
+              <input type="number" name="epochs" value={config.epochs} onChange={handleConfigChange} disabled={isTraining} className="black-purple-hover" />
             </label>
           </div>
           <div style={{ marginBottom: '10px' }}>
             <label style={{ display: 'block' }}>
               Batch Size:
-              <input type="number" name="batchSize" value={config.batchSize} onChange={handleConfigChange} disabled={isTraining} style={{ width: '100px', marginLeft: '10px' }} />
+              <input type="number" name="batchSize" value={config.batchSize} onChange={handleConfigChange} disabled={isTraining} className="black-purple-hover" />
             </label>
           </div>
           <div style={{ marginBottom: '10px' }}>
             <label style={{ display: 'block' }}>
               Learning Rate:
-              <input type="number" name="learningRate" step="0.0001" value={config.learningRate} onChange={handleConfigChange} disabled={isTraining} style={{ width: '100px', marginLeft: '10px' }} />
+              <input type="number" name="learningRate" step="0.0001" value={config.learningRate} onChange={handleConfigChange} disabled={isTraining} className="black-purple-hover" />
             </label>
           </div>
           <div style={{ marginBottom: '20px' }}>
             <label style={{ display: 'block' }}>
               Optimizer:
-              <select name="optimizer" value={config.optimizer} onChange={handleConfigChange} disabled={isTraining} style={{ marginLeft: '10px' }}>
+              <select name="optimizer" value={config.optimizer} onChange={handleConfigChange} disabled={isTraining} className="black-purple-hover">
                 <option>Adam</option>
                 <option>SGD</option>
                 <option>RMSprop</option>
