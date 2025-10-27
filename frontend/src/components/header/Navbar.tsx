@@ -84,85 +84,56 @@ function Navbar({ onNavigate, currentPage }: NavbarProps) {
             {/* Auth Dropdown */}
             <div className="relative">
               <button
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium
-                           transition-all duration-300 ease-out
-                           flex items-center gap-1.5
-                           ${isDropdownOpen 
-                             ? 'text-white bg-white/10 shadow-[0_0_12px_rgba(168,85,247,0.25)]'
-                             : 'text-gray-400 hover:text-white hover:bg-white/5 hover:shadow-[0_0_8px_rgba(255,255,255,0.15)]'}`}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-300 ease-out flex items-center gap-1.5 ${isDropdownOpen ? 'text-white bg-white/10 shadow-[0_0_12px_rgba(168,85,247,0.25)]' : 'text-gray-400 hover:text-white hover:bg-white/5 hover:shadow-[0_0_8px_rgba(255,255,255,0.15)]'}`}
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
               >
                 <span className="max-w-[120px] truncate">
                   {currentUser ? currentUser.email.split('@')[0] : 'Auth'}
                 </span>
-                <svg className={`w-3.5 h-3.5 transition-transform duration-300 ease-out ${isDropdownOpen ? 'rotate-180' : ''}`} 
-                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className={`w-3.5 h-3.5 transition-transform duration-300 ease-out ${isDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
               </button>
-
               {/* Dropdown Menu */}
               {isDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-48 rounded-xl
-                              bg-zinc-900/95 backdrop-blur-xl
-                              border border-white/10
-                              shadow-[0_8px_32px_rgba(0,0,0,0.6),0_0_16px_rgba(168,85,247,0.15)]
-                              py-1.5 z-50
-                              animate-in fade-in slide-in-from-top-2 duration-200">
-                  {currentUser ? (
-                    <>
-                    <a
-                      className="block px-4 py-2 text-sm text-gray-300
-                                 transition-all duration-200 ease-out
-                                 hover:bg-white/5 hover:text-white 
-                                 hover:shadow-[inset_0_0_12px_rgba(168,85,247,0.1)]
-                                 rounded-lg mx-1"
-                      href="#"
-                      onClick={(e) => handleNavClick('signout', e)}
-                    >
-                      Sign out
-                    </a>
-                    <a
-                    className="block px-4 py-2 text-sm text-gray-300
-                               transition-all duration-200 ease-out
-                               hover:bg-white/5 hover:text-white 
-                               hover:shadow-[inset_0_0_12px_rgba(168,85,247,0.1)]
-                               rounded-lg mx-1"
-                    href="#"
-                    onClick={(e) => handleNavClick('profile', e)}
-                  >
-                    My Account
-                  </a>
-                    </>
-                    
-                  ) : (
-                    <>
-                      <a
-                        className="block px-4 py-2 text-sm text-gray-300
-                                   transition-all duration-200 ease-out
-                                   hover:bg-white/5 hover:text-white 
-                                   hover:shadow-[inset_0_0_12px_rgba(168,85,247,0.1)]
-                                   rounded-lg mx-1"
-                        href="#"
-                        onClick={(e) => handleNavClick('login', e)}
-                      >
-                        Login
-                      </a>
-                      <a
-                        className="block px-4 py-2 text-sm text-gray-300
-                                   transition-all duration-200 ease-out
-                                   hover:bg-white/5 hover:text-white 
-                                   hover:shadow-[inset_0_0_12px_rgba(168,85,247,0.1)]
-                                   rounded-lg mx-1"
-                        href="#"
-                        onClick={(e) => handleNavClick('register', e)}
-                      >
-                        Register
-                      </a>
-                    </>
-                  )}
-                  
-                  <div className="my-1.5 h-px bg-white/5"></div>
+                <div className="absolute right-0 mt-2 w-48 rounded-xl bg-black/60 backdrop-blur-xl border border-white/10 shadow-lg z-50">
+                  <div className="py-2">
+                    {currentUser ? (
+                      <>
+                        <a
+                          className="block px-4 py-2 text-sm text-gray-300 transition-all duration-200 ease-out hover:bg-white/10 hover:text-white rounded-lg mx-1"
+                          href="#"
+                          onClick={(e) => handleNavClick('profile', e)}
+                        >
+                          My Account
+                        </a>
+                        <a
+                          className="block px-4 py-2 text-sm text-gray-300 transition-all duration-200 ease-out hover:bg-white/10 hover:text-white rounded-lg mx-1"
+                          href="#"
+                          onClick={(e) => handleNavClick('signout', e)}
+                        >
+                          Sign out
+                        </a>
+                      </>
+                    ) : (
+                      <>
+                        <a
+                          className="block px-4 py-2 text-sm text-gray-300 transition-all duration-200 ease-out hover:bg-white/10 hover:text-white rounded-lg mx-1"
+                          href="#"
+                          onClick={(e) => handleNavClick('login', e)}
+                        >
+                          Login
+                        </a>
+                        <a
+                          className="block px-4 py-2 text-sm text-gray-300 transition-all duration-200 ease-out hover:bg-white/10 hover:text-white rounded-lg mx-1"
+                          href="#"
+                          onClick={(e) => handleNavClick('register', e)}
+                        >
+                          Register
+                        </a>
+                      </>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
