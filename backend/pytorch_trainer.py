@@ -156,13 +156,15 @@ def train_model(layers, config):
         final_loss, final_accuracy = epoch_loss, epoch_accuracy
 
         # Send data to frontend via SSE for the real time updating graph
+        """
         data = {
             "epoch": epoch,
             "loss": final_loss,
             "accuracy": final_accuracy
         }
+        """
 
-        yield f"data: {json.dumps(data)}\n\n"
+        # yield f"data: {json.dumps(data)}\n\n"
 
         output_log.append(f"Epoch {epoch}/{epochs} - Loss: {final_loss:.4f}, Accuracy: {final_accuracy:.4f}")
 
