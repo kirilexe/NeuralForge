@@ -45,20 +45,74 @@ export default function TrainView() {
     };
 
     try {
-      const response = await fetch('http://127.0.0.1:5000/train', {
+      // Use the streaming endpoint and read the response body as it arrives.
+      const response = await fetch('http://127.0.0.1:5000/train_stream', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(trainingPayload),
       });
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      if (!response.ok || !response.body) {
+        throw new Error(`HTTP error or no streaming body! status: ${response.status}`);
       }
 
-      const data = await response.json();
-      setConsoleOutput(prev => [...prev, ...data.output, `\n--- Training Finished! ---`, `Final Loss: ${data.loss.toFixed(4)} | Accuracy: ${data.accuracy.toFixed(4)}`]);
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      // Read chunks as they arrive and parse SSE-style `data: ...\n\n` events.
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+
+        const parts = buffer.split('\n\n');
+        buffer = parts.pop() || '';
+
+        for (const part of parts) {
+          const lines = part.split('\n').map(l => l.trim());
+          const dataLine = lines.find(l => l.startsWith('data:'));
+          if (!dataLine) {
+            // If not an SSE data line, append raw part
+            setConsoleOutput(prev => [...prev, part]);
+            continue;
+          }
+
+          const jsonStr = dataLine.replace(/^data:\s*/, '');
+          try {
+            const parsed = JSON.parse(jsonStr);
+
+            // Live epoch updates
+            if (parsed.epoch !== undefined) {
+              const msg = `Epoch ${parsed.epoch} - Loss: ${parsed.loss?.toFixed?.(4) ?? parsed.loss} | Accuracy: ${parsed.accuracy?.toFixed?.(4) ?? parsed.accuracy}`;
+              setConsoleOutput(prev => [...prev, msg]);
+
+              // Unused variables for inspection and also log to browser console
+              const _live_loss = parsed.loss;
+              const _live_accuracy = parsed.accuracy;
+              console.log('Live epoch update - loss:', _live_loss, 'accuracy:', _live_accuracy);
+            }
+
+            // Final summary once done
+            else if (parsed.done) {
+              setConsoleOutput(prev => [...prev, '\n--- Training Finished! ---', `Final Loss: ${parsed.loss?.toFixed?.(4) ?? parsed.loss} | Accuracy: ${parsed.accuracy?.toFixed?.(4) ?? parsed.accuracy}`]);
+              const _final_loss = parsed.loss;
+              const _final_accuracy = parsed.accuracy;
+              console.log('Training finished - loss:', _final_loss, 'accuracy:', _final_accuracy);
+            }
+
+            // If the backend sent an output array, append it
+            else if (parsed.output) {
+              setConsoleOutput(prev => [...prev, ...(parsed.output as string[])]);
+            }
+
+          } catch (e) {
+            // If JSON parse fails, just append the raw part to console
+            setConsoleOutput(prev => [...prev, part]);
+          }
+        }
+      }
+
     } catch (error) {
       setConsoleOutput(prev => [...prev, `\nERROR: Could not connect to backend or training failed. Is 'python app.py' running? Details: ${error}`]);
     } finally {

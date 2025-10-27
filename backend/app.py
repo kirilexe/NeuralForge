@@ -28,14 +28,23 @@ def train_model_endpoint():
         "accuracy": final_accuracy
     })
 
-"""
-@app.route('/train_stream')
+@app.route('/train_stream', methods=['POST'])
 def train_stream():
+    data = request.get_json() or {}
+    model_layers = data.get('model_layers', [])
+
+    default_config = {
+        "epochs": 5,
+        "batchSize": 64,
+        "optimizer": "Adam"
+    }
+    training_config = data.get('training_config', default_config)
+
     def generate():
-        for message in train_generator():  # the generator that yields training updates in real time for the graph
+        for message in train_generator(model_layers, training_config):
             yield message
+
     return Response(generate(), mimetype='text/event-stream')
-"""
 
 @app.route('/test', methods=['POST'])
 def test_endpoint():

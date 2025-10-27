@@ -11,6 +11,8 @@ import numpy as np
 import random
 import io
 import json
+import threading
+import queue
 
 TEMP_MODEL_PATH = './temp_model_state.pth'
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -81,8 +83,16 @@ def build_dynamic_cnn(layers):
 
     return nn.Sequential(*model_layers)
 
-def train_model(layers, config):
-    """Loads data, builds model, and runs a basic PyTorch training loop."""
+def train_model(layers, config, progress_callback=None):
+    """Loads data, builds model, and runs a basic PyTorch training loop.
+
+    Args:
+        layers: list of layer definitions used to build the model.
+        config: training configuration dict.
+        progress_callback: optional callable called each epoch with a dict {epoch, loss, accuracy}.
+
+    Returns (unchanged): output_log (list of strings), final_loss (float), final_accuracy (float)
+    """
     
     transform = transforms.Compose([
         transforms.ToTensor(),
@@ -164,9 +174,18 @@ def train_model(layers, config):
         }
         """
 
-        # yield f"data: {json.dumps(data)}\n\n"
+        # Call optional progress callback for real-time streaming (e.g., SSE or websocket)
+        if progress_callback is not None:
+            try:
+                progress_callback({"epoch": epoch, "loss": final_loss, "accuracy": final_accuracy})
+            except Exception:
+                # Don't let callback errors break training; just continue
+                pass
 
-        output_log.append(f"Epoch {epoch}/{epochs} - Loss: {final_loss:.4f}, Accuracy: {final_accuracy:.4f}")
+        # Print to stdout with flush so console shows updates in real time
+        epoch_line = f"Epoch {epoch}/{epochs} - Loss: {final_loss:.4f}, Accuracy: {final_accuracy:.4f}"
+        print(epoch_line, flush=True)
+        output_log.append(epoch_line)
 
         save_data = {
             'state_dict': model.state_dict(),
@@ -175,6 +194,41 @@ def train_model(layers, config):
         torch.save(save_data, TEMP_MODEL_PATH)
         
     return output_log, final_loss, final_accuracy
+
+
+def train_generator(layers, config):
+    """Generator that runs train_model in a background thread and yields
+    Server-Sent Events (SSE) formatted messages (text/event-stream).
+
+    Yields lines like: 'data: {json}\n\n' for each epoch and a final message
+    with done=True when training completes.
+    """
+    q = queue.Queue()
+    sentinel = object()
+
+    def callback(data):
+        try:
+            q.put(json.dumps(data))
+        except Exception:
+            pass
+
+    def worker():
+        output, final_loss, final_accuracy = train_model(layers, config, progress_callback=callback)
+        # send final summary
+        try:
+            q.put(json.dumps({"done": True, "loss": final_loss, "accuracy": final_accuracy, "output": output}))
+        except Exception:
+            pass
+        q.put(sentinel)
+
+    t = threading.Thread(target=worker, daemon=True)
+    t.start()
+
+    while True:
+        item = q.get()
+        if item is sentinel:
+            break
+        yield f"data: {item}\n\n"
 
 def load_temp_model():
     """Loads the model state from the temporary file and rebuilds the model."""
