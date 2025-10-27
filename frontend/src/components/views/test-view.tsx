@@ -102,7 +102,7 @@ export default function TestView() {
                 </div>
             
                 <div style={{ flex: 1 }}>
-                    <h2>Training Console Output</h2>
+                    <h2 className="underline-title-text">Training Console Output</h2>
                     <div 
                         style={{ 
                             backgroundColor: '#272b35', 

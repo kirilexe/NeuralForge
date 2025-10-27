@@ -73,10 +73,10 @@ export default function TrainView() {
       <h1 className="">Train</h1>
       <div style={{ display: "flex", gap: "3rem" }} className="bg-[#1e293b] rounded-xl p-6 border border-white/10">
         <div style={{ width: '300px' }}>
-          <h2>Training Configuration</h2>
+          <h2 className="underline-title-text">Training Configuration</h2>
           <div className="black-purple-hover-div">
-            <p>Neural Network Params (Estimate): **{totalParams.toLocaleString()}**</p>
-            <p>Neural Network Layers: **{layers.length}**</p>
+            <p className="bg-purple-500/20 text-blue-200 font-mono text-sm p-0.5 border-purple-800 rounded-md text-center">Neural Network Params: {totalParams.toLocaleString()}</p>
+            <p className="bg-purple-500/20 text-blue-200 font-mono text-sm p-0.5 mt-1.5 border-purple-800 rounded-md text-center">Neural Network Layers: {layers.length}</p>
           </div>
           
           <div style={{ marginBottom: '10px' }}>
@@ -111,14 +111,14 @@ export default function TrainView() {
           <button 
             onClick={startTraining} 
             disabled={isTraining}
-            style={{ padding: '10px 20px', backgroundColor: isTraining ? '#ccc' : '#28a745', color: 'white', border: 'none', borderRadius: '5px' }}
+            className="btn-transparent-white"
           >
             {isTraining ? 'Training in Progress...' : 'Start Training'}
           </button>
         </div>
 
         <div style={{ flex: 1 }}>
-          <h2>Training Console Output</h2>
+          <h2 className="underline-title-text">Training Console Output</h2>
           <div 
             style={{ 
               backgroundColor: '#272b35', 
@@ -130,7 +130,7 @@ export default function TrainView() {
               overflowY: 'scroll',
               whiteSpace: 'pre-wrap'
             }}
-          >
+            className="bg-[#111827] text-green-400 font-mono text-sm p-3 rounded-md border border-purple-800/30 shadow-inner hover:border-purple-500/40">
             {consoleOutput.length > 0 ? consoleOutput.join('\n') : "Click 'Start Training' to begin..."}
           </div>
         </div>

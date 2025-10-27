@@ -3,6 +3,8 @@ import BuildView from "../components/views/build-view";
 import TrainView from "../components/views/train-view";
 import TestView from "../components/views/test-view";
 import Navbar from "../components/header/Navbar";
+//@ts-ignore
+import NeuralBackground from "../components/dashboard/NeuralBackground";
 
 export default function Dashboard() {
   const [tab, setTab] = useState<"build" | "train" | "test">("build");
@@ -29,7 +31,10 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-[#0f172a]">
-      <div>
+
+  <NeuralBackground />
+  {/* Ensure UI is above the background canvas */}
+  <div className="relative z-10">
         {/* Tab Navigation */}
         <div className="sticky top-14 z-40 bg-[#1e293b]/95 backdrop-blur-md border-b border-white/10">
           <div className="max-w-7xl mx-auto px-6">

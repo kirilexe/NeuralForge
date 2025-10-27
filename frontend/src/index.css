@@ -36,6 +36,9 @@
     @apply w-full p-4 bg-[#0f0f0f] rounded-lg border border-[#2a2a2a] shadow-sm transition-all hover:border-purple-500/40
   }
 
+  .underline-title-text {
+    @apply text-sm font-semibold text-gray-200 mb-2 border-b border-gray-700/50 pb-1
+  }
 }
 
 
