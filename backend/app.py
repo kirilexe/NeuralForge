@@ -1,5 +1,5 @@
-from flask import Flask, request, jsonify, make_response
-from pytorch_trainer import train_model, load_temp_model, test_model, TEMP_MODEL_PATH
+from flask import Flask, request, jsonify, make_response, Response
+from pytorch_trainer import train_model, load_temp_model, test_model, train_generator, TEMP_MODEL_PATH
 import os
 
 # for whatever reason the browser blocks the testing requests because of CORS, so the only way
@@ -27,6 +27,13 @@ def train_model_endpoint():
         "loss": final_loss,
         "accuracy": final_accuracy
     })
+
+@app.route('/train_stream')
+def train_stream():
+    def generate():
+        for message in train_generator():  # the generator that yields training updates in real time for the graph
+            yield message
+    return Response(generate(), mimetype='text/event-stream')
 
 @app.route('/test', methods=['POST'])
 def test_endpoint():

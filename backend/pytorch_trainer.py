@@ -10,6 +10,7 @@ matplotlib.use('Agg')
 import numpy as np
 import random
 import io
+import json
 
 TEMP_MODEL_PATH = './temp_model_state.pth'
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -153,7 +154,16 @@ def train_model(layers, config):
         
         epoch_accuracy = correct / total
         final_loss, final_accuracy = epoch_loss, epoch_accuracy
-        
+
+        # Send data to frontend via SSE for the real time updating graph
+        data = {
+            "epoch": epoch,
+            "loss": final_loss,
+            "accuracy": final_accuracy
+        }
+
+        yield f"data: {json.dumps(data)}\n\n"
+
         output_log.append(f"Epoch {epoch}/{epochs} - Loss: {final_loss:.4f}, Accuracy: {final_accuracy:.4f}")
 
         save_data = {
@@ -164,7 +174,6 @@ def train_model(layers, config):
         
     return output_log, final_loss, final_accuracy
 
-# The rest of your functions (load_temp_model, test_model) remain the same
 def load_temp_model():
     """Loads the model state from the temporary file and rebuilds the model."""
     if not os.path.exists(TEMP_MODEL_PATH):
