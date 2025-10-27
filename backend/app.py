@@ -28,12 +28,14 @@ def train_model_endpoint():
         "accuracy": final_accuracy
     })
 
+"""
 @app.route('/train_stream')
 def train_stream():
     def generate():
         for message in train_generator():  # the generator that yields training updates in real time for the graph
             yield message
     return Response(generate(), mimetype='text/event-stream')
+"""
 
 @app.route('/test', methods=['POST'])
 def test_endpoint():
