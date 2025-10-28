@@ -160,6 +160,15 @@ export default function TrainView() {
 
   const totalParams = layers.length * 1000;
 
+  const clearGraph = () => {
+    lossHistoryRef.current = [];
+    accuracyHistoryRef.current = [];
+    setChartLoss([]);
+    setChartAcc([]);
+    return;
+  }
+
+
   return (
     <div style={{ padding: '20px' }}>
       <h1 className="">Train</h1>
@@ -201,16 +210,17 @@ export default function TrainView() {
           </div>
 
           <button 
-            onClick={startTraining} 
+            onClick= {() => { clearGraph(); startTraining(); }}
             disabled={isTraining}
             className="btn-transparent-white"
           >
             {isTraining ? 'Training in Progress...' : 'Start Training'}
           </button>
         </div>
-
+        {/* IGNORE */}
         <div style={{ flex: 1 }}>
           <h2 className="underline-title-text">Training Console Output</h2>
+          {/*}
           <div 
             style={{ 
               backgroundColor: '#272b35', 
@@ -242,7 +252,7 @@ export default function TrainView() {
                 ]}
                 // small fixed height so it fits under the console
                 sx={{ 
-                  height: 200,
+                  height: 350,
                   '& text': {
                     fill: 'white',
                   },
