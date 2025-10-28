@@ -1,5 +1,6 @@
 // train-view.tsx
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useRef } from "react";
+import { LineChart } from '@mui/x-charts';
 import type { Layer } from '../../types/model'; 
 import { useModel } from '../../contexts/ModelContext'; 
 
@@ -21,6 +22,14 @@ export default function TrainView() {
     learningRate: 0.001,
     optimizer: 'Adam',
   });
+  // Keep histories for plotting later. We store values in refs to avoid
+  // unnecessary re-renders while streaming training updates.
+  const lossHistoryRef = useRef<number[]>([]);
+  const accuracyHistoryRef = useRef<number[]>([]);
+  // State copies used for rendering the chart in real-time. We snapshot
+  // the refs into these arrays whenever new epoch data arrives.
+  const [chartLoss, setChartLoss] = useState<number[]>([]);
+  const [chartAcc, setChartAcc] = useState<number[]>([]);
   
   const { layers } = useModel(); 
 
@@ -45,7 +54,7 @@ export default function TrainView() {
     };
 
     try {
-      // Use the streaming endpoint and read the response body as it arrives.
+      // Use the streaming endpoint and read the response body as it arrives
       const response = await fetch('http://127.0.0.1:5000/train_stream', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -91,6 +100,21 @@ export default function TrainView() {
               const _live_loss = parsed.loss;
               const _live_accuracy = parsed.accuracy;
               console.log('Live epoch update - loss:', _live_loss, 'accuracy:', _live_accuracy);
+              // Save values into history refs so they can be used for charts later.
+              try {
+                if (_live_loss !== undefined && _live_loss !== null) {
+                  lossHistoryRef.current.push(Number(_live_loss));
+                }
+                if (_live_accuracy !== undefined && _live_accuracy !== null) {
+                  accuracyHistoryRef.current.push(Number(_live_accuracy));
+                }
+              } catch (e) {
+                // Defensive: if conversion fails, ignore and continue streaming
+                console.warn('Failed to record live epoch values', e);
+              }
+              // Snapshot into state so the chart re-renders in real-time.
+              setChartLoss([...lossHistoryRef.current]);
+              setChartAcc([...accuracyHistoryRef.current]);
             }
 
             // Final summary once done
@@ -99,6 +123,20 @@ export default function TrainView() {
               const _final_loss = parsed.loss;
               const _final_accuracy = parsed.accuracy;
               console.log('Training finished - loss:', _final_loss, 'accuracy:', _final_accuracy);
+              // Also record final values into histories (if present)
+              try {
+                if (_final_loss !== undefined && _final_loss !== null) {
+                  lossHistoryRef.current.push(Number(_final_loss));
+                }
+                if (_final_accuracy !== undefined && _final_accuracy !== null) {
+                  accuracyHistoryRef.current.push(Number(_final_accuracy));
+                }
+              } catch (e) {
+                console.warn('Failed to record final training values', e);
+              }
+              // Snapshot final values into chart state as well
+              setChartLoss([...lossHistoryRef.current]);
+              setChartAcc([...accuracyHistoryRef.current]);
             }
 
             // If the backend sent an output array, append it
@@ -186,6 +224,44 @@ export default function TrainView() {
             }}
             className="bg-[#111827] text-green-400 font-mono text-sm p-3 rounded-md border border-purple-800/30 shadow-inner hover:border-purple-500/40">
             {consoleOutput.length > 0 ? consoleOutput.join('\n') : "Click 'Start Training' to begin..."}
+          </div>
+          {/* Live chart preview (updates in real-time) */}
+          
+          <div style={{ marginTop: '16px' }} className="mt-4 p-3 rounded-md bg-slate-900">
+            <h3 className="underline-title-text">Training Chart</h3>
+            <div style={{ background: '#0b1220', padding: '12px', borderRadius: 8 }} className="text-white">
+              <LineChart
+                series={[
+                  { data: chartLoss, label: 'Loss', yAxisId: 'leftAxisId', },
+                  { data: chartAcc, label: 'Accuracy', yAxisId: 'rightAxisId' },
+                ]}
+                xAxis={[{ scaleType: 'point', data: chartLoss.map((_, i) => `E${i + 1}`) }]}
+                yAxis={[
+                  { id: 'leftAxisId', width: 50 },
+                  { id: 'rightAxisId', position: 'right' },
+                ]}
+                // small fixed height so it fits under the console
+                sx={{ 
+                  height: 200,
+                  '& text': {
+                    fill: 'white',
+                  },
+                  '& line': {
+                    stroke: 'white',
+                  },
+                  '& .MuiChartsAxis-line': {
+                    stroke: 'white !important',
+                  },  
+                  '& .MuiChartsAxis-tick': {
+                    stroke: 'white !important',
+                  },
+                  '& MuiChartsLabel-root MuiChartsLegend-label': {
+                    fill: 'white !important',
+                    text: 'white !important',
+                  }
+                }}
+              />
+            </div>
           </div>
         </div>
       </div>
