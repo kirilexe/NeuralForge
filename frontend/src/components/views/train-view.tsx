@@ -242,7 +242,7 @@ export default function TrainView() {
             <div style={{ background: '#0b1220', padding: '12px', borderRadius: 8 }} className="text-white">
               <LineChart
                 series={[
-                  { data: chartLoss, label: 'Loss', yAxisId: 'leftAxisId', },
+                  { data: chartLoss, label: 'Loss', yAxisId: 'leftAxisId'},
                   { data: chartAcc, label: 'Accuracy', yAxisId: 'rightAxisId' },
                 ]}
                 xAxis={[{ scaleType: 'point', data: chartLoss.map((_, i) => `E${i + 1}`) }]}
@@ -251,6 +251,16 @@ export default function TrainView() {
                   { id: 'rightAxisId', position: 'right' },
                 ]}
                 // small fixed height so it fits under the console
+                slotProps={{
+                  legend: {
+                    sx: {
+                      fontSize: 14,
+                      color: 'white'
+                    }
+                  }
+                }
+
+                }
                 sx={{ 
                   height: 350,
                   '& text': {
@@ -265,9 +275,12 @@ export default function TrainView() {
                   '& .MuiChartsAxis-tick': {
                     stroke: 'white !important',
                   },
-                  '& MuiChartsLabel-root MuiChartsLegend-label': {
+                  '& .MuiChartsLegend-label': {
                     fill: 'white !important',
                     text: 'white !important',
+                  },
+                  '& .MuiChartsLegend-series text tspan': {
+                    fill: 'white',
                   }
                 }}
               />
