@@ -217,7 +217,6 @@ export default function TrainView() {
             {isTraining ? 'Training in Progress...' : 'Start Training'}
           </button>
         </div>
-        {/* IGNORE */}
         <div style={{ flex: 1 }}>
           <h2 className="underline-title-text">Training Console Output</h2>
           {/*}
@@ -251,7 +250,7 @@ export default function TrainView() {
                   { id: 'rightAxisId', position: 'right' },
                 ]}
                 // small fixed height so it fits under the console
-                slotProps={{
+                slotProps={{ // ????? for whatever reason this changes the color to white but the ten thousand lines of code below don't?????????????
                   legend: {
                     sx: {
                       fontSize: 14,
@@ -284,6 +283,10 @@ export default function TrainView() {
                   }
                 }}
               />
+              <span className="flex"> {/* to align side by side */}
+                <p className="text-sm font-semibold mr-30">Loss: {chartLoss}</p>
+                <p className="text-sm font-semibold">Accuracy: {chartAcc}</p>
+              </span>
             </div>
           </div>
         </div>

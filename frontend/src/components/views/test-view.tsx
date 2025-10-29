@@ -4,6 +4,10 @@ import type { Layer } from '../../types/model'; // FIXED: use 'import type'
 
 const API_URL = "http://127.0.0.1:5000";
 
+// let lossValue = null;
+
+// let accValue = trainView.chartAcc;
+
 const useModelArchitectureState = () => {
     const [layers] = useState<Layer[]>([
         { id: 1, type: 'Input', inputShape: [28, 28, 1] },
@@ -47,7 +51,7 @@ export default function TestView() {
             setTestImageSrc(imageUrl);
             setConsoleOutput(prev => [...prev, `\nSUCCESS: Classification visualization generated and displayed.`]);
             
-            // NOTE: In a real app, accuracy/loss should be passed from the train view
+            // todo
             setAccuracy("Last Train Accuracy"); 
             setLoss("Last Train Loss");
 
@@ -70,11 +74,12 @@ export default function TestView() {
 
     return (
         <div style={{ padding: '20px' }}>
-            <h1>Test</h1>
+            <h1 className="underline-title-text">Test</h1>
             <div style={{ display: "flex", gap: "3rem" }}>
                 <div style={{ width: '300px' }}>
-                    <h2>Test Results</h2>
-                    <p>Final performance metrics of your trained model.</p>
+                    <p className="text-sm">Click the button to test your Neural Network with a random image from the database it has not seen yet.</p>
+                    {/*
+                     
                     <div style={{ display: "flex", gap: "2rem" }}>
                         <div>
                             <h3>Accuracy</h3>
@@ -85,17 +90,12 @@ export default function TestView() {
                             <p>{loss}</p>
                         </div>
                     </div>
+                    */}
+
                     <button
                         onClick={handleTestModel}
                         disabled={isLoading}
-                        style={{ 
-                            padding: '10px 20px', 
-                            backgroundColor: isLoading ? '#ccc' : '#007bff', 
-                            color: 'white', 
-                            border: 'none', 
-                            borderRadius: '5px',
-                            marginTop: '20px' 
-                        }}
+                        className="btn-transparent-white mt-1.5 disabled:bg-gray-900"
                     >
                         {isLoading ? 'Generating Insights...' : 'Generate Explainable Insights'}
                     </button>
