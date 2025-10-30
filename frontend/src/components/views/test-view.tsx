@@ -21,6 +21,8 @@ export default function TestView() {
     const [consoleOutput, setConsoleOutput] = useState<string[]>(["Awaiting test execution..."]);
     const { layers } = useModelArchitectureState();
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
     const handleTestModel = useCallback(async () => {
         setIsLoading(true);
@@ -60,9 +62,7 @@ export default function TestView() {
     }, []);
 
     const handleTestCustomImage = useCallback(async () => {
-        const fileInput = fileInputRef.current;
-        
-        if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+        if (!selectedFile) {
             setConsoleOutput(["ERROR: Please select an image file first."]);
             return;
         }
@@ -73,7 +73,7 @@ export default function TestView() {
 
         try {
             const formData = new FormData();
-            formData.append('image', fileInput.files[0]);
+            formData.append('image', selectedFile);
 
             const response = await fetch(`${API_URL}/test_custom`, {
                 method: "POST",
@@ -97,7 +97,24 @@ export default function TestView() {
         } finally {
             setIsLoading(false);
         }
-    }, []);
+    }, [selectedFile]);
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            setSelectedFile(file);
+            const url = URL.createObjectURL(file);
+            setPreviewUrl(url);
+        }
+    };
+
+    const handleRemoveFile = () => {
+        setSelectedFile(null);
+        setPreviewUrl(null);
+        if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+        }
+    };
 
     const imageContainerStyle = {
         maxWidth: '100%',
@@ -124,14 +141,63 @@ export default function TestView() {
                     </button>
 
                     <div style={{ marginTop: '2rem' }}>
-                        <p className="text-sm">Or upload your own image to test:</p>
-                        <input 
-                            ref={fileInputRef}
-                            id="file" 
-                            type="file"
-                            accept="image/*"
-                            style={{ marginTop: '0.5rem' }}
-                        />
+                        <p className="text-sm mb-2">Or upload your own image to test:</p>
+                        
+                        {!selectedFile ? (
+                            <label 
+                                htmlFor="file"
+                                className="flex flex-col items-center justify-center border-2 border-dashed border-gray-600 rounded-lg p-8 cursor-pointer hover:border-gray-500 hover:bg-gray-800/50 transition-all bg-gray-800/30"
+                            >
+                                <svg 
+                                    className="w-12 h-12 text-gray-500 mb-3" 
+                                    fill="none" 
+                                    stroke="currentColor" 
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path 
+                                        strokeLinecap="round" 
+                                        strokeLinejoin="round" 
+                                        strokeWidth={2} 
+                                        d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" 
+                                    />
+                                </svg>
+                                <p className="text-gray-400 text-sm mb-1">Click to upload an image</p>
+                                <p className="text-gray-500 text-xs">PNG, JPG up to 10MB</p>
+                                <input 
+                                    ref={fileInputRef}
+                                    id="file" 
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={handleFileChange}
+                                    className="hidden"
+                                />
+                            </label>
+                        ) : (
+                            <div className="border-2 border-gray-600 rounded-lg p-4 bg-gray-800/30">
+                                <div className="flex items-center gap-3">
+                                    {previewUrl && (
+                                        <img 
+                                            src={previewUrl} 
+                                            alt="Preview" 
+                                            className="w-16 h-16 object-cover rounded border border-gray-600"
+                                        />
+                                    )}
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-sm text-gray-300 truncate">{selectedFile.name}</p>
+                                        <p className="text-xs text-gray-500">{(selectedFile.size / 1024).toFixed(2)} KB</p>
+                                    </div>
+                                    <button
+                                        onClick={handleRemoveFile}
+                                        className="text-gray-400 hover:text-red-400 transition-colors p-1"
+                                        title="Remove file"
+                                    >
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        )}
 
                         <button
                             onClick={handleTestCustomImage}
