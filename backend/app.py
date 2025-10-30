@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify, make_response, Response
-from pytorch_trainer import train_model, load_temp_model, test_model, train_generator, TEMP_MODEL_PATH
+from pytorch_trainer import train_model, load_temp_model, test_model, train_generator, test_model_custom_image, TEMP_MODEL_PATH
 import os
 
 # for whatever reason the browser blocks the testing requests because of CORS, so the only way
@@ -73,6 +73,43 @@ def test_endpoint():
             "status": "error", 
             "message": f"An error occurred during model testing: {e}"
         }), 500
+    
+from flask import Flask, request, send_file, jsonify
+from PIL import Image
+import io
+
+@app.route('/test_custom', methods=['POST'])
+def test_custom():
+    try:
+        # Check if image file was uploaded
+        if 'image' not in request.files:
+            return jsonify({'error': 'No image file provided'}), 400
+        
+        file = request.files['image']
+        
+        # Check if file is empty
+        if file.filename == '':
+            return jsonify({'error': 'No file selected'}), 400
+        
+        # Load the trained model
+        model = load_temp_model()
+        if model is None:
+            return jsonify({'error': 'No trained model found. Please train a model first.'}), 404
+        
+        # Open the image from the uploaded file
+        image = Image.open(file.stream)
+        
+        # Test the model with the custom image
+        image_bytes = test_model_custom_image(model, image)
+        
+        # Return the visualization as PNG (consistent with /test endpoint)
+        response = make_response(image_bytes)
+        response.headers.set('Content-Type', 'image/png')
+        response.headers.set('Content-Disposition', 'attachment', filename='custom_classification.png')
+        return response
+        
+    except Exception as e:
+        return jsonify({'error': f'Error processing image: {str(e)}'}), 500
 
 @app.route('/', methods=['GET'])
 def status():

@@ -13,6 +13,7 @@ import io
 import json
 import threading
 import queue
+from PIL import Image
 
 TEMP_MODEL_PATH = './temp_model_state.pth'
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -305,3 +306,75 @@ def test_model(model):
         
     # Return the image bytes
     return view_classification(image, probabilities)
+
+def test_model_custom_image(model, image):
+    
+    # Convert image to grayscale if needed and resize to 28x28
+    if isinstance(image, np.ndarray):
+        image = Image.fromarray(image)
+    
+    # Ensure grayscale
+    if image.mode != 'L':
+        image = image.convert('L')
+    
+    # 28x28 (MNIST size to take less data + work with the database it has already)
+    image = image.resize((28, 28), Image.Resampling.LANCZOS)
+    
+    # Apply the same transform as training
+    transform = transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize((0.1307,), (0.3081,))
+    ])
+    
+    # Transform the image
+    image_tensor = transform(image)
+    
+    model.eval()
+    
+    classes = [str(i) for i in range(10)]
+    
+    def view_classification(image, probabilities):
+        if matplotlib.pyplot.get_fignums():
+            matplotlib.pyplot.close('all')
+
+        probabilities = probabilities.data.numpy().squeeze()
+        fig, (ax1, ax2) = plt.subplots(figsize=(6, 9), ncols=2)
+        
+        mean = 0.1307
+        std = 0.3081
+        image_denorm = image * std + mean
+        
+        ax1.imshow(image_denorm.cpu().squeeze(), cmap='gray')
+        ax1.axis('off')
+        
+        ax2.barh(np.arange(10), probabilities)
+        ax2.set_aspect(0.1)
+        ax2.set_yticks(np.arange(10))
+        ax2.set_yticklabels(classes)
+        ax2.set_title('Class Probability')
+        ax2.set_xlim(0, 1.1)
+        plt.tight_layout()
+        
+        buf = io.BytesIO()
+        plt.savefig(buf, format='png', dpi=100, bbox_inches='tight')
+        buf.seek(0)
+        plt.close(fig)
+        return buf.getvalue()
+
+    # Prepare image for model (add batch dimension)
+    batched_image = image_tensor.unsqueeze(0).to(DEVICE)
+
+    with torch.no_grad():
+        outputs = model(batched_image)
+    
+    probabilities = torch.nn.functional.softmax(outputs, dim=1).squeeze().cpu()
+
+    # Debug: Check the shape
+    print(f"Output shape: {outputs.shape}, Probabilities shape: {probabilities.shape}")
+
+    # Make sure probabilities has 10 elements (one per class)
+    if probabilities.dim() == 0:
+        probabilities = torch.nn.functional.softmax(outputs, dim=1).squeeze(0).cpu()
+        
+    # Return the image bytes
+    return view_classification(image_tensor, probabilities)

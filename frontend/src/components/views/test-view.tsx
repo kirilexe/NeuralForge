@@ -1,12 +1,8 @@
 // test-view.tsx
-import React, { useState, useCallback } from "react";
-import type { Layer } from '../../types/model'; // FIXED: use 'import type'
+import React, { useState, useCallback, useRef } from "react";
+import type { Layer } from '../../types/model';
 
 const API_URL = "http://127.0.0.1:5000";
-
-// let lossValue = null;
-
-// let accValue = trainView.chartAcc;
 
 const useModelArchitectureState = () => {
     const [layers] = useState<Layer[]>([
@@ -24,6 +20,7 @@ export default function TestView() {
     const [loss, setLoss] = useState('n/a');
     const [consoleOutput, setConsoleOutput] = useState<string[]>(["Awaiting test execution..."]);
     const { layers } = useModelArchitectureState();
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const handleTestModel = useCallback(async () => {
         setIsLoading(true);
@@ -62,13 +59,52 @@ export default function TestView() {
         }
     }, []);
 
+    const handleTestCustomImage = useCallback(async () => {
+        const fileInput = fileInputRef.current;
+        
+        if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+            setConsoleOutput(["ERROR: Please select an image file first."]);
+            return;
+        }
+
+        setIsLoading(true);
+        setTestImageSrc(null);
+        setConsoleOutput(["Starting custom image test..."]);
+
+        try {
+            const formData = new FormData();
+            formData.append('image', fileInput.files[0]);
+
+            const response = await fetch(`${API_URL}/test_custom`, {
+                method: "POST",
+                body: formData,
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({ message: `Server error: ${response.status}` }));
+                setConsoleOutput(prev => [...prev, `\nERROR: Custom image test failed. Details: ${errorData.error || errorData.message || response.statusText}`]);
+                return;
+            }
+
+            const imageBlob = await response.blob();
+            const imageUrl = URL.createObjectURL(imageBlob);
+            
+            setTestImageSrc(imageUrl);
+            setConsoleOutput(prev => [...prev, `\nSUCCESS: Custom image classification visualization generated and displayed.`]);
+
+        } catch (error) {
+            setConsoleOutput(prev => [...prev, `\nERROR: Could not connect to backend or test failed. Is 'python app.py' running? Details: ${error}`]);
+        } finally {
+            setIsLoading(false);
+        }
+    }, []);
+
     const imageContainerStyle = {
         maxWidth: '100%',
         maxHeight: '100%',
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
-        // Optional: to fit the image nicely inside the scrolling console
         padding: '10px 0', 
     };
 
@@ -78,8 +114,35 @@ export default function TestView() {
             <div style={{ display: "flex", gap: "3rem" }}>
                 <div style={{ width: '300px' }}>
                     <p className="text-sm">Click the button to test your Neural Network with a random image from the database it has not seen yet.</p>
+                    
+                    <button
+                        onClick={handleTestModel}
+                        disabled={isLoading}
+                        className="btn-transparent-white mt-1.5 disabled:bg-gray-900"
+                    >
+                        {isLoading ? 'Generating Insights...' : 'Test with Random Image'}
+                    </button>
+
+                    <div style={{ marginTop: '2rem' }}>
+                        <p className="text-sm">Or upload your own image to test:</p>
+                        <input 
+                            ref={fileInputRef}
+                            id="file" 
+                            type="file"
+                            accept="image/*"
+                            style={{ marginTop: '0.5rem' }}
+                        />
+
+                        <button
+                            onClick={handleTestCustomImage}
+                            disabled={isLoading}
+                            className="btn-transparent-white mt-1.5 disabled:bg-gray-900"
+                        >
+                            {isLoading ? 'Generating Insights...' : 'Test with Custom Image'}
+                        </button>
+                    </div>
+
                     {/*
-                     
                     <div style={{ display: "flex", gap: "2rem" }}>
                         <div>
                             <h3>Accuracy</h3>
@@ -91,14 +154,6 @@ export default function TestView() {
                         </div>
                     </div>
                     */}
-
-                    <button
-                        onClick={handleTestModel}
-                        disabled={isLoading}
-                        className="btn-transparent-white mt-1.5 disabled:bg-gray-900"
-                    >
-                        {isLoading ? 'Generating Insights...' : 'Generate Explainable Insights'}
-                    </button>
                 </div>
             
                 <div style={{ flex: 1 }}>
