@@ -1,4 +1,6 @@
 import React from 'react';
+//@ts-ignore
+import Tooltip from './Reuseable/Tooltip';
 import type { Layer } from '../../types/model';
 
 interface LayerConfigProps extends Layer {
@@ -67,9 +69,26 @@ export default function LayerComponent({
         {type === 'Convolutional' && (
           <>
             <div>
-              <label className="block text-xs font-medium text-gray-400 mb-1">
-                Output Channels
-              </label>
+              <div className="flex justify-between items-start">
+                {/* 1. Container for Label and Tooltip - uses flex to keep them on one line */}
+                <div className="flex items-center space-x-1"> 
+                    <label className="block text-xs font-medium text-gray-400">
+                        Output Channels
+                    </label>
+                    
+                    {/* 2. Tooltip Component Placed Directly Next to the Label */}
+                    <Tooltip
+                        title="Output Channels (Filters)"
+                        type="Hyperparameter"
+                        explanation="This determines the number of feature maps the convolutional layer will learn and produce. It controls the depth of the output volume. The higher the parameter is, the more neurons we have. For example - 64 output channels = ~50000 neurons. (because each channel looks at each pixel of the image 64 times, 28*28*64 = 50176)"
+                        smaller="Fewer channels mean fewer features learned, potentially underfitting."
+                        bigger="More channels increase model capacity but risk overfitting and dramatically increase computation time."
+                        recommendation="Start with powers of 2 (e.g., 32, 64) and double the channels in deeper layers."
+                        position="right" // Adjusted position to prevent it from clipping out of the card
+                    />
+                </div>
+              </div>
+              
               <input
                 type="number"
                 value={outputChannels || ''}
@@ -80,9 +99,23 @@ export default function LayerComponent({
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-gray-400 mb-1">
-                Kernel Size
-              </label>
+              <div className="flex justify-between items-start">
+                <div className="flex items-center space-x-1"> 
+                  <label className="block text-xs font-medium text-gray-400 mb-1">
+                    Kernel Size
+                  </label>
+                  <Tooltip
+                    title="Kernel Size (The Feature Finder)"
+                    type="Tuning Setting"
+                    explanation="The Kernel is a tiny window (like a magnifying glass) that slides over your image. This number (usually 3) sets the size of that window (e.g., 3x3 pixels) and determines how much of the image the network looks at all at once to find a feature like an edge or a corner."
+                    smaller="A small kernel (e.g., 3x3) finds basic, local features like tiny lines. It's fast, efficient, and lets your network go deeper."
+                    bigger="A big kernel (e.g., 7x7) looks at a large area to find complex, global features, but it slows down training and uses more memory."
+                    recommendation="Start with **3x3**. It's the industry standard because it's the best balance for finding features without wasting computer power."
+                    position="right"
+                  />
+                  </div>
+              </div>
+              
               <input
                 type="number"
                 value={kernelSize || ''}
@@ -108,9 +141,22 @@ export default function LayerComponent({
         )}
 
         <div>
-          <label className="block text-xs font-medium text-gray-400 mb-1">
-            Activation Function
-          </label>
+          <div className="flex justify-between items-start">
+                <div className="flex items-center space-x-1"> 
+                  <label className="block text-xs font-medium text-gray-400 mb-1">
+                    Activation Function
+                  </label>
+                  <Tooltip
+                    title="Activation Function (The Decision Maker)"
+                    type="Core Component"
+                    explanation="The activation function lives inside every neuron and decides whether that neuron should 'fire' and pass its information to the next layer. It's like turning the neuron 'on' or 'off.' Without it, the network could only learn straight lines and simple patterns."
+                    smaller="Using a simple activation (like ReLU) makes the network fast and efficient for finding patterns in images."
+                    bigger="Using a complex activation (like Sigmoid or Tanh) can sometimes slow down learning in very deep networks, but is necessary for specific tasks like predicting probabilities."
+                    recommendation="Start with ReLU. It is the most common and best choice for most hidden layers in modern neural networks."
+                    position="right"
+                  />
+                </div>
+          </div>
           <select
             value={displayActivation}
             onChange={(e) => {

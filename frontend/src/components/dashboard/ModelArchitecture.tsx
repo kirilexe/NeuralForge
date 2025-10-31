@@ -2,6 +2,8 @@
 import React from 'react';
 import LayerConfig from './LayerComponent';
 import type { Layer } from '../../types/model';
+//@ts-ignore
+import Tooltip from './Reuseable/Tooltip';
 
 interface ModelArchitectureProps {
   layers: Layer[];
@@ -93,6 +95,15 @@ export default function ModelArchitecture({ layers, setLayers }: ModelArchitectu
           </svg>
           Add Fully Connected
         </button>
+        <Tooltip
+              title="Fully Connected Layer"
+              type="Important"
+              explanation="A layer that connects every neuron in one layer to every neuron in the next layer."
+              smaller="Fewer layers may miss important features but train faster."
+              bigger="More layers would increase training time."
+              recommendation="Connect all neurons from the previous layer to this one. Commonly used towards the end of the network. Example - 2 convolutional layers, followed by ***1 fully connected layer***. All the neurons connect, reassuring confidence in the final output."
+              position="top" 
+            />
         <button 
           onClick={addConvolutionalLayer}
           className="flex items-center gap-2 px-4 py-2.5 bg-[#334155] hover:bg-[#3f4f62] 
@@ -105,6 +116,15 @@ export default function ModelArchitecture({ layers, setLayers }: ModelArchitectu
           </svg>
           Add Convolutional
         </button>
+        <Tooltip
+              title="Convolutional Layers"
+              type="Important"
+              explanation="Layers that see and learn special patterns in images. They help the model understand features like edges, shapes and more."
+              smaller="Fewer layers may miss important features but train faster."
+              bigger="More layers would significantly increase training time but it will capture more complex features."
+              recommendation="Start with 1 or 2 of these layers for simpler neural networks, increase for more complex data. (e.g. detecting numbers - 2 layers are enough, detecting a lot of objects - 4 layers is better)"
+              position="top" 
+            />
       </div>
     </div>
   );
