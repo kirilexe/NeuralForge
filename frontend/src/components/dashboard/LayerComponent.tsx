@@ -70,13 +70,11 @@ export default function LayerComponent({
           <>
             <div>
               <div className="flex justify-between items-start">
-                {/* 1. Container for Label and Tooltip - uses flex to keep them on one line */}
                 <div className="flex items-center space-x-1"> 
                     <label className="block text-xs font-medium text-gray-400">
                         Output Channels
                     </label>
                     
-                    {/* 2. Tooltip Component Placed Directly Next to the Label */}
                     <Tooltip
                         title="Output Channels (Filters)"
                         type="Hyperparameter"
@@ -84,7 +82,7 @@ export default function LayerComponent({
                         smaller="Fewer channels mean fewer features learned, potentially underfitting."
                         bigger="More channels increase model capacity but risk overfitting and dramatically increase computation time."
                         recommendation="Start with powers of 2 (e.g., 32, 64) and double the channels in deeper layers."
-                        position="right" // Adjusted position to prevent it from clipping out of the card
+                        position="right"
                     />
                 </div>
               </div>
@@ -101,7 +99,7 @@ export default function LayerComponent({
             <div>
               <div className="flex justify-between items-start">
                 <div className="flex items-center space-x-1"> 
-                  <label className="block text-xs font-medium text-gray-400 mb-1">
+                  <label className="block text-xs font-medium text-gray-400">
                     Kernel Size
                   </label>
                   <Tooltip
@@ -129,7 +127,21 @@ export default function LayerComponent({
 
         {type === 'Fully Connected' && (
           <div>
-            <label className="block text-xs font-medium text-gray-400 mb-1">Units</label>
+            <div className="flex items-center space-x-1"> 
+                    <label className="block text-xs font-medium text-gray-400">
+                        Units
+                    </label>
+                    
+                    <Tooltip
+                        title="Units (Neurons)"
+                        type="Hyperparameter"
+                        explanation="This defines the number of neurons in the fully connected layer. Each neuron processes information from all neurons in the previous layer, allowing the network to solidify the learned features into final predictions."
+                        smaller="Fewer units may lead to underfitting, missing important patterns."
+                        bigger="Too many units can cause overfitting and increase computation time."
+                        recommendation="Choose a number that balances model complexity, often less than the previous Convolutional layer's output size. (connect all ~50000 neurons from conv layer to 128 or 256 units here for less complexity.)"
+                        position="right"
+                    />
+                </div>
             <input
               type="number"
               value={units || ''}
@@ -143,7 +155,7 @@ export default function LayerComponent({
         <div>
           <div className="flex justify-between items-start">
                 <div className="flex items-center space-x-1"> 
-                  <label className="block text-xs font-medium text-gray-400 mb-1">
+                  <label className="block text-xs font-medium text-gray-400">
                     Activation Function
                   </label>
                   <Tooltip
