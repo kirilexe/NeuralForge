@@ -25,7 +25,7 @@ export default function Tooltip({
 
       <div
         className={`
-          absolute z-50 
+          absolute z-max
           group-hover:block 
           w-80 p-4 
           bg-gray-800/95 

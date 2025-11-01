@@ -31,7 +31,7 @@ function UserHomePage() {
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className={`transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-          <h1 className="text-4xl md:text-5xl font-bold mb-4 text-center">
+          <h1 className="text-4xl md:text-5xl font-bold mb-4 text-center font-mono">
             Welcome back!
           </h1>
           <p className="text-gray-400 text-lg text-center mb-12">
@@ -46,7 +46,7 @@ function UserHomePage() {
               key={option.id}
               className={`bg-gradient-to-b from-gray-900/50 to-transparent border rounded-xl p-6 transition-all duration-300 cursor-pointer ${
                 option.status === 'active' 
-                  ? 'border-gray-700 hover:border-blue-500 hover:shadow-lg hover:shadow-blue-500/20' 
+                  ? 'border-gray-700 hover:border-purple-500 hover:shadow-lg hover:shadow-blue-500/20' 
                   : 'border-gray-800 opacity-60'
               } ${
                 isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
