@@ -66,11 +66,11 @@ const ProfilePage = () => {
 
   return (
     <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
-      <div className="w-full max-w-lg bg-indigo-900/50 backdrop-blur-sm rounded-xl shadow-2xl p-8 space-y-8 border border-indigo-700/50">
+      <div className="black-purple-hover-div w-150 h-auto mb-2">
         
         {/* Header */}
         <h1 className="text-3xl font-bold text-center text-indigo-200">
-          Your Profile 👤
+          Your Profile
         </h1>
 
         {/* User Info Section */}
@@ -80,19 +80,13 @@ const ProfilePage = () => {
           </h2>
           
           <div className="p-4 bg-indigo-800/40 rounded-lg">
-            <p className="text-gray-200 text-lg">
-              <span className="font-medium text-indigo-400">Name:</span> 
-              <span className="ml-2">
-                {currentUser ? currentUser.displayName || 'Not set' : 'Loading...'}
-              </span>
-            </p>
             <p className="text-gray-200 text-lg mt-2">
               <span className="font-medium text-indigo-400">Email:</span> 
               <span className="ml-2">
                 {currentUser ? currentUser.email : 'Loading...'}
               </span>
             </p>
-            <p className="text-gray-200 text-sm mt-3 text-indigo-300">
+            <p className="text-gray-200 mt-2 text-xs">
               Last login: {currentUser?.metadata?.lastSignInTime 
                 ? new Date(currentUser.metadata.lastSignInTime).toLocaleString() 
                 : 'N/A'
@@ -119,7 +113,7 @@ const ProfilePage = () => {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4 content-center">
             
             {/* Current Password Input */}
             <div>
@@ -133,7 +127,7 @@ const ProfilePage = () => {
                 onChange={(e) => setCurrentPassword(e.target.value)}
                 required
                 disabled={loading}
-                className="w-full px-4 py-2 bg-indigo-900 border border-indigo-700 rounded-lg text-white placeholder-gray-500 focus:ring-indigo-500 focus:border-indigo-500 disabled:opacity-50"
+                className="w-full px-4 py-2 bg-gray-900 border border-indigo-700 rounded-lg text-white placeholder-gray-500 focus:ring-indigo-500 focus:border-indigo-500 disabled:opacity-50"
                 placeholder="Enter your current password"
               />
             </div>
@@ -151,7 +145,7 @@ const ProfilePage = () => {
                 required
                 disabled={loading}
                 minLength={6}
-                className="w-full px-4 py-2 bg-indigo-900 border border-indigo-700 rounded-lg text-white placeholder-gray-500 focus:ring-indigo-500 focus:border-indigo-500 disabled:opacity-50"
+                className="w-full px-4 py-2 bg-gray-900 border border-indigo-700 rounded-lg text-white placeholder-gray-500 focus:ring-indigo-500 focus:border-indigo-500 disabled:opacity-50"
                 placeholder="Enter new password (min. 6 characters)"
               />
             </div>
@@ -169,7 +163,7 @@ const ProfilePage = () => {
                 required
                 disabled={loading}
                 minLength={6}
-                className="w-full px-4 py-2 bg-indigo-900 border border-indigo-700 rounded-lg text-white placeholder-gray-500 focus:ring-indigo-500 focus:border-indigo-500 disabled:opacity-50"
+                className="w-full px-4 py-2 bg-gray-900 border border-indigo-700 rounded-lg text-white placeholder-gray-500 focus:ring-indigo-500 focus:border-indigo-500 disabled:opacity-50"
                 placeholder="Confirm new password"
               />
             </div>
@@ -178,10 +172,10 @@ const ProfilePage = () => {
             <button 
               type="submit" 
               disabled={loading}
-              className={`w-full py-3 rounded-lg font-semibold transition duration-200 ease-in-out 
+              className={`py-3 rounded-lg font-semibold transition duration-200 ease-in-out justify-center
                 ${loading 
-                  ? 'bg-indigo-700 cursor-not-allowed text-indigo-300' 
-                  : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-500/50 hover:shadow-indigo-500/30'
+                  ? 'btn-transparent-white w-20px opacity-50 cursor-not-allowed' 
+                  : 'btn-transparent-white w-20px'
                 }`}
             >
               {loading ? 'Updating Password...' : 'Update Password'}
