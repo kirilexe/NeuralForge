@@ -29,21 +29,16 @@ export default function Dashboard() {
     }
   }, [tab]);
 
-  const [isVisible, setIsVisible] = useState(false);
-
-  useEffect(() => {
-    setIsVisible(true);
-  }, []);
 
   return (
-    <div className="min-h-screen bg-[#0f172a]">
+    <div className="flex flex-col min-h-screen bg-[#0f172a]">
 
   <NeuralBackground />
   {/* Ensure UI is above the background canvas */}
-  <div className="relative z-10">
+  <div className="relative z-10 ">
         {/* Tab Navigation */}
-        <div className="sticky top-14 z-40 bg-[#1e293b]/95 backdrop-blur-md border-b border-white/10">
-          <div className="max-w-7xl mx-auto px-6">
+        <div className="sticky top-14 z-40 bg-[#1e293b]/95 backdrop-blur-md border-b border-white/10 h-full">
+          <div className="w-full mx-auto px-6">
             <div className="flex gap-1 relative">
               <button
                 ref={refs.build}
@@ -110,7 +105,7 @@ export default function Dashboard() {
         </div>
 
         {/* Tab Content */}
-        <div className="max-w-7xl mx-auto px-6 py-8">
+        <div className="max-w-7xl mx-auto px-6 py-8 flex-grow ">
           <div style={{ display: tab === "build" ? "block" : "none" }}>
             <BuildView />
           </div>

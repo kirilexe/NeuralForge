@@ -18,8 +18,8 @@ export default function BuildView() {
       <div className={`transform transition-all duration-700 ease-out ${
         isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
       }`}>
-        <h1 className="text-3xl font-bold text-white mb-6">Build your Neural Network</h1>
-      </div>
+        <h1 className="text-3xl font-bold text-white mb-6 font-mono mt-2">Build your Neural Network</h1>
+      </div> 
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className={`lg:col-span-2 transform transition-all duration-700 ease-out ${
