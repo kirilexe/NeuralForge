@@ -57,6 +57,21 @@ function Navbar({ onNavigate, currentPage }: NavbarProps) {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-1">
+
+            {currentUser && (
+              <a
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium
+                           transition-all duration-300 ease-out
+                           ${currentPage === 'loggeduser' 
+                             ? 'text-white bg-white/10 shadow-[0_0_12px_rgba(168,85,247,0.25)]' 
+                             : 'text-gray-400 hover:text-white hover:bg-white/5 hover:shadow-[0_0_8px_rgba(255,255,255,0.15)]'}`}
+                href="#"
+                onClick={(e) => handleNavClick('loggeduser', e)}
+              >
+                Home
+              </a>
+            )}
+
             <a
               className={`px-3 py-1.5 rounded-lg text-sm font-medium
                          transition-all duration-300 ease-out
@@ -66,7 +81,7 @@ function Navbar({ onNavigate, currentPage }: NavbarProps) {
               href="#"
               onClick={(e) => handleNavClick('home', e)}
             >
-              Home
+              Landing
             </a>
 
             <a

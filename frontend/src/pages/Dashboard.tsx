@@ -29,6 +29,12 @@ export default function Dashboard() {
     }
   }, [tab]);
 
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    setIsVisible(true);
+  }, []);
+
   return (
     <div className="min-h-screen bg-[#0f172a]">
 
