@@ -1,6 +1,7 @@
-from flask import Flask, request, jsonify, make_response, Response
-from pytorch_trainer import train_model, load_temp_model, test_model, train_generator, test_model_custom_image, TEMP_MODEL_PATH
+from flask import Flask, request, jsonify, make_response, Response, send_file
+from pytorch_trainer import train_model, load_temp_model, test_model, train_generator, test_model_custom_image, download_model, TEMP_MODEL_PATH
 import os
+from io import BytesIO
 
 # for whatever reason the browser blocks the testing requests because of CORS, so the only way
 # to make this work is to disable CORS in the browser by running some command??????
@@ -110,6 +111,21 @@ def test_custom():
         
     except Exception as e:
         return jsonify({'error': f'Error processing image: {str(e)}'}), 500
+
+
+@app.route('/download_model', methods=['GET'])
+def download_model_route():
+    """Flask route to send the model file for download."""
+    model_bytes = download_model()
+    if model_bytes is None:
+        return Response("Model not found", status=404)
+    
+    return send_file(
+        BytesIO(model_bytes),
+        as_attachment=True,
+        download_name="model.pth",  # name shown in browser download
+        mimetype="application/octet-stream"
+    )
 
 @app.route('/', methods=['GET'])
 def status():

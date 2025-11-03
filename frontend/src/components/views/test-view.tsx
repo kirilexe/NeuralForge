@@ -50,9 +50,6 @@ export default function TestView() {
             setTestImageSrc(imageUrl);
             setConsoleOutput(prev => [...prev, `\nSUCCESS: Classification visualization generated and displayed.`]);
             
-            // todo
-            setAccuracy("Last Train Accuracy"); 
-            setLoss("Last Train Loss");
 
         } catch (error) {
             setConsoleOutput(prev => [...prev, `\nERROR: Could not connect to backend or test failed. Is 'python app.py' running? Details: ${error}`]);
@@ -124,6 +121,36 @@ export default function TestView() {
         alignItems: 'center',
         padding: '10px 0', 
     };
+
+    
+    const handleDownloadModel = async () => {
+        try {
+            const response = await fetch(`${API_URL}/download_model`, {
+            method: "GET",
+            });
+
+            if (!response.ok) {
+            throw new Error("Failed to download model");
+            }
+
+            // Get the file as a Blob
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+
+            // Create a temporary link to trigger download
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = "model.pth"; // Match your backend filename
+            document.body.appendChild(link);
+            link.click();
+
+            // Cleanup
+            link.remove();
+            window.URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error("Error downloading model:", error);
+        }
+        };
 
     return (
         <div style={{ padding: '20px' }}>
@@ -207,7 +234,15 @@ export default function TestView() {
                             {isLoading ? 'Generating Insights...' : 'Test with Custom Image'}
                         </button>
                     </div>
-
+                    
+                    <h1 className="underline-title-text mt-5">Happy with your Neural Network performance?</h1>
+                    <p className="text-xs">Download a ready to deploy .pth file of the current NN.</p>
+                    <button 
+                    className="btn-transparent-white mt-1.5"
+                    onClick={handleDownloadModel}
+                    >
+                            Download Model (.pth)
+                        </button>
                     {/*
                     <div style={{ display: "flex", gap: "2rem" }}>
                         <div>
@@ -223,7 +258,7 @@ export default function TestView() {
                 </div>
             
                 <div style={{ flex: 1 }}>
-                    <h2 className="underline-title-text">Training Console Output</h2>
+                    <h2 className="underline-title-text">Testing Output</h2>
                     <div 
                         style={{ 
                             backgroundColor: '#272b35', 

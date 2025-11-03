@@ -324,8 +324,10 @@ export default function TrainView() {
                 }}
               />
               <span className="flex"> {/* to align side by side */}
-                <p className="text-sm font-semibold mr-30">Loss: {chartLoss}</p>
-                <p className="text-sm font-semibold">Accuracy: {chartAcc}</p>
+                {/* @ts-ignore */}
+                <p className="text-sm font-semibold mr-30">Loss: {chartLoss.length ? Number(chartLoss[chartLoss.length - 1]).toFixed(2) : "—"}</p>
+                {/* @ts-ignore */}
+                <p className="text-sm font-semibold">Accuracy: {chartAcc.length ? (Number(chartAcc[chartAcc.length - 1]) * 100).toFixed(2) + "%" : "—"}</p>
               </span>
             </div>
           </div>

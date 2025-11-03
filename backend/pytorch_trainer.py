@@ -378,3 +378,13 @@ def test_model_custom_image(model, image):
         
     # Return the image bytes
     return view_classification(image_tensor, probabilities)
+
+def download_model():
+    """Returns the bytes of the saved model file for download."""
+    if not os.path.exists(TEMP_MODEL_PATH):
+        return None
+    
+    with open(TEMP_MODEL_PATH, 'rb') as f:
+        model_bytes = f.read()
+    
+    return model_bytes
