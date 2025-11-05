@@ -85,26 +85,37 @@ def build_dynamic_cnn(layers):
     return nn.Sequential(*model_layers)
 
 def train_model(layers, config, progress_callback=None):
-    """Loads data, builds model, and runs a basic PyTorch training loop.
-
-    Args:
-        layers: list of layer definitions used to build the model.
-        config: training configuration dict.
-        progress_callback: optional callable called each epoch with a dict {epoch, loss, accuracy}.
-
-    Returns (unchanged): output_log (list of strings), final_loss (float), final_accuracy (float)
-    """
+    """Loads data, builds model, and runs a basic PyTorch training loop."""
     
     transform = transforms.Compose([
         transforms.ToTensor(),
         transforms.Normalize((0.1307,), (0.3081,))
     ])
     
-    train_dataset = datasets.MNIST('./data', train=True, download=True, transform=transform)
+    # Check if custom dataset exists
+    custom_dataset_path = './custom_data'
+    has_custom_dataset = os.path.exists(custom_dataset_path) and os.listdir(custom_dataset_path)
+    
+    if has_custom_dataset:
+        # TODO: Implement your custom dataset loading logic here
+        # For now, we'll fall back to MNIST but you can add your custom dataset logic
+        print("Custom dataset detected but using MNIST for now")
+        # You would implement custom dataset loading based on your file format
+        # For example:
+        # train_dataset = YourCustomDataset(custom_dataset_path, train=True, transform=transform)
+        # test_dataset = YourCustomDataset(custom_dataset_path, train=False, transform=transform)
+        
+        # Fall back to MNIST for this example
+        train_dataset = datasets.MNIST('./data', train=True, download=True, transform=transform)
+        test_dataset = datasets.MNIST('./data', train=False, transform=transform)
+    else:
+        # Use MNIST as default
+        train_dataset = datasets.MNIST('./data', train=True, download=True, transform=transform)
+        test_dataset = datasets.MNIST('./data', train=False, transform=transform)
+    
+    # Rest of the function remains the same...
     subset_indices = torch.randperm(len(train_dataset))[:5000] 
     train_subset = torch.utils.data.Subset(train_dataset, subset_indices)
-    
-    test_dataset = datasets.MNIST('./data', train=False, transform=transform)
     
     batch_size = config.get('batchSize', 64)
     epochs = config.get('epochs', 3)

@@ -9,7 +9,7 @@ import { ModelProvider } from './contexts/ModelContext';
 //@ts-ignore
 import UserHomePage from './pages/UserHomePage';
 import { useState, useEffect } from 'react';
-import ProfilePage from './components/auth/profile/index';
+import ProfilePage from './components/auth/profile/index'; 
 //@ts-ignore
 import { AuthProvider, useAuth } from './contexts/authContext/index';
 
