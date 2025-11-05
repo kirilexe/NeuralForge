@@ -22,12 +22,10 @@ from torch.utils.data import Dataset
 TEMP_MODEL_PATH = './temp_model_state.pth'
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-def build_dynamic_cnn(layers):
+def build_dynamic_cnn(layers, input_channels=1, input_size=28, num_classes=10):
     model_layers = []
-    
-    # ALWAYS start with input layer for MNIST (1 channel, 28x28)
-    input_channels = 1
-    current_size = 28
+    current_channels = input_channels
+    current_size = input_size
     
     # Process user-defined middle layers
     for layer in layers:
@@ -39,8 +37,8 @@ def build_dynamic_cnn(layers):
             activation_name = layer.get('activation', 'ReLU')
 
             # Add conv layer
-            model_layers.append(nn.Conv2d(input_channels, out_channels, kernel_size, padding=1))
-            input_channels = out_channels
+            model_layers.append(nn.Conv2d(current_channels, out_channels, kernel_size, padding=1))
+            current_channels = out_channels
             
             # Add activation
             if activation_name == 'ReLU':
@@ -59,7 +57,7 @@ def build_dynamic_cnn(layers):
             break
 
     # Flatten before FC layers
-    flatten_size = input_channels * current_size * current_size
+    flatten_size = current_channels * current_size * current_size
     model_layers.append(nn.Flatten())
 
     # Process FC layers (user-defined middle layers)
@@ -82,19 +80,36 @@ def build_dynamic_cnn(layers):
             elif activation_name == 'Tanh':
                 model_layers.append(nn.Tanh())
 
-    # ALWAYS end with output layer for MNIST (10 classes)
-    model_layers.append(nn.Linear(input_units, 10))  # 10 classes for MNIST
+    # Output layer
+    model_layers.append(nn.Linear(input_units, num_classes))
     model_layers.append(nn.Softmax(dim=1))
 
     return nn.Sequential(*model_layers)
 
+
+def calculate_input_size(layers, input_size=28):
+    """Calculate the final size after conv and pooling layers"""
+    current_size = input_size
+    
+    for layer in layers:
+        layer_type = layer.get('type')
+        
+        if layer_type == 'Convolutional':
+            # Conv with padding=1 doesn't change size
+            # MaxPool reduces size by half
+            current_size //= 2
+            
+        elif layer_type == 'Fully Connected':
+            # Stop when we hit FC layers
+            break
+    
+    return current_size
+
 def train_model(layers, config, progress_callback=None):
     """Loads data, builds model, and runs a basic PyTorch training loop."""
-    
-    transform = transforms.Compose([
-        transforms.ToTensor(),
-        transforms.Normalize((0.1307,), (0.3081,))
-    ])
+
+    global _TEST_DATASET_CACHE
+    _TEST_DATASET_CACHE = None
     
     # Check if custom dataset exists
     custom_dataset_path = './custom_data'
@@ -103,17 +118,42 @@ def train_model(layers, config, progress_callback=None):
     if has_custom_dataset:
         print("Custom dataset detected - loading from ZIP file...")
         try:
-            train_dataset, test_dataset = load_custom_zip_dataset(custom_dataset_path, transform)
-            print("✅ Custom dataset loaded successfully!")
+            train_dataset, test_dataset, dataset_info = load_custom_zip_dataset(custom_dataset_path)
+            print(f"✅ Custom dataset loaded: {dataset_info}")
+            
+            # Use detected parameters
+            input_channels = dataset_info['channels']
+            input_size = dataset_info['image_size']
+            num_classes = dataset_info['num_classes']
+            
+            print(f"Detected input size: {input_size}x{input_size}, channels: {input_channels}, classes: {num_classes}")
+                
         except Exception as e:
             print(f"❌ Failed to load custom dataset: {e}")
             print("🔄 Falling back to MNIST dataset...")
+            # Use MNIST as default
+            transform = transforms.Compose([
+                transforms.ToTensor(),
+                transforms.Normalize((0.1307,), (0.3081,))
+            ])
             train_dataset = datasets.MNIST('./data', train=True, download=True, transform=transform)
             test_dataset = datasets.MNIST('./data', train=False, transform=transform)
+            input_channels, input_size, num_classes = 1, 28, 10
     else:
         # Use MNIST as default
+        transform = transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Normalize((0.1307,), (0.3081,))
+        ])
         train_dataset = datasets.MNIST('./data', train=True, download=True, transform=transform)
         test_dataset = datasets.MNIST('./data', train=False, transform=transform)
+        input_channels, input_size, num_classes = 1, 28, 10
+    
+    # Build model with detected parameters
+    try:
+        model = build_dynamic_cnn(layers, input_channels, input_size, num_classes).to(DEVICE)
+    except Exception as e:
+        return [f"ERROR: Could not build model. Details: {e}"], 0.0, 0.0
     
     # Rest of the function remains exactly the same...
     subset_indices = torch.randperm(len(train_dataset))[:5000] 
@@ -124,11 +164,6 @@ def train_model(layers, config, progress_callback=None):
     
     train_loader = DataLoader(train_subset, batch_size=batch_size, shuffle=True)
     test_loader = DataLoader(test_dataset, batch_size=1000, shuffle=False)
-    
-    try:
-        model = build_dynamic_cnn(layers).to(DEVICE)
-    except Exception as e:
-        return [f"ERROR: Could not build model. Details: {e}"], 0.0, 0.0
     
     criterion = nn.CrossEntropyLoss()
     optimizer_name = config.get('optimizer', 'Adam')
@@ -143,7 +178,8 @@ def train_model(layers, config, progress_callback=None):
     output_log = ["=================================================="]
     output_log.append(f"Model built with PyTorch on device: {DEVICE}")
     output_log.append(f"Training Config: Epochs={epochs}, Batch={batch_size}, Opt={optimizer_name}")
-    output_log.append(f"Architecture: Input → {len(layers)} user layers → Output(10 classes)")
+    output_log.append(f"Input: {input_channels} channel(s), {input_size}x{input_size} images")
+    output_log.append(f"Architecture: Input → {len(layers)} user layers → Output({num_classes} classes)")
     
     final_loss, final_accuracy = 0.0, 0.0
 
@@ -194,7 +230,10 @@ def train_model(layers, config, progress_callback=None):
 
         save_data = {
             'state_dict': model.state_dict(),
-            'layers': layers
+            'layers': layers,
+            'input_channels': input_channels,
+            'input_size': input_size,
+            'num_classes': num_classes
         }
         torch.save(save_data, TEMP_MODEL_PATH)
         
@@ -222,8 +261,8 @@ class SimpleCustomDataset(torch.utils.data.Dataset):
             
         return image, label
 
-def load_custom_zip_dataset(custom_dataset_path, transform):
-    """Load dataset from ZIP file - handles MNIST PNG folder structure."""
+def load_custom_zip_dataset(custom_dataset_path):
+    """Load dataset from ZIP file - handles any folder names."""
     import zipfile
     from PIL import Image
     import io
@@ -241,47 +280,82 @@ def load_custom_zip_dataset(custom_dataset_path, transform):
     test_images = []
     test_labels = []
     
+    # Dynamic class mapping - will be built as we encounter folder names
+    class_to_label = {}
+    next_label = 0
+    
     with zipfile.ZipFile(zip_path, 'r') as zip_ref:
         # Get all files in the ZIP
         file_list = zip_ref.namelist()
         print(f"Files in ZIP: {len(file_list)}")
+        print(f"First few files: {file_list[:10]}")  # Debug: show first 10 files
         
-        # Look for training/ and testing/ folders (MNIST PNG structure)
+        # Look for training/ and testing/ folders 
         for file_path in file_list:
             if file_path.lower().endswith(('.png', '.jpg', '.jpeg')):
                 # Parse the path to get label and split type
                 parts = file_path.split('/')
                 
-                # Handle different naming conventions
-                if 'training' in parts or 'train' in parts:
-                    # Look for digit folder name
-                    for part in parts:
-                        if part.isdigit() and 0 <= int(part) <= 9:
-                            label = int(part)
-                            try:
-                                with zip_ref.open(file_path) as file:
-                                    image_data = file.read()
-                                    image = Image.open(io.BytesIO(image_data)).convert('L')
-                                    train_images.append(image)
-                                    train_labels.append(label)
-                            except Exception as e:
-                                print(f"Warning: Could not load {file_path}: {e}")
+                # Debug: print the path structure
+                if len(train_images) < 5:  # Only print first few for debugging
+                    print(f"Processing: {file_path}, Parts: {parts}")
+                
+                # Find the class folder name (the folder containing the image)
+                class_name = None
+                for i, part in enumerate(parts):
+                    if i < len(parts) - 1:  # Not the last part (filename)
+                        if parts[i+1].lower().endswith(('.png', '.jpg', '.jpeg')):
+                            class_name = part
                             break
                 
-                elif 'testing' in parts or 'test' in parts:
-                    # Look for digit folder name  
-                    for part in parts:
-                        if part.isdigit() and 0 <= int(part) <= 9:
-                            label = int(part)
-                            try:
-                                with zip_ref.open(file_path) as file:
-                                    image_data = file.read()
-                                    image = Image.open(io.BytesIO(image_data)).convert('L')
-                                    test_images.append(image)
-                                    test_labels.append(label)
-                            except Exception as e:
-                                print(f"Warning: Could not load {file_path}: {e}")
-                            break
+                # If we couldn't find class name, try the folder before the file
+                if class_name is None and len(parts) >= 2:
+                    class_name = parts[-2]  # Folder containing the image file
+                
+                if class_name:
+                    # Add to class mapping if new class
+                    if class_name not in class_to_label:
+                        class_to_label[class_name] = next_label
+                        next_label += 1
+                    
+                    label = class_to_label[class_name]
+                    
+                    # Determine if it's train or test
+                    is_train = any(x in file_path.lower() for x in ['training', 'train'])
+                    is_test = any(x in file_path.lower() for x in ['testing', 'test'])
+                    
+                    # If no clear train/test, use folder structure or default to train
+                    if not is_train and not is_test:
+                        # Check if file is in a train/test folder
+                        for part in parts:
+                            if 'train' in part.lower():
+                                is_train = True
+                                break
+                            elif 'test' in part.lower():
+                                is_test = True
+                                break
+                        # If still not clear, default to train
+                        if not is_train and not is_test:
+                            is_train = True
+                    
+                    try:
+                        with zip_ref.open(file_path) as file:
+                            image_data = file.read()
+                            # Try to detect if image is RGB or grayscale
+                            image = Image.open(io.BytesIO(image_data))
+                            
+                            # Convert to RGB if it's not grayscale
+                            if image.mode != 'L':
+                                image = image.convert('RGB')
+                            
+                            if is_train:
+                                train_images.append(image)
+                                train_labels.append(label)
+                            else:  # is_test
+                                test_images.append(image)
+                                test_labels.append(label)
+                    except Exception as e:
+                        print(f"Warning: Could not load {file_path}: {e}")
         
         # If we found images but no test images, split train 80/20
         if train_images and not test_images:
@@ -293,15 +367,61 @@ def load_custom_zip_dataset(custom_dataset_path, transform):
             train_labels = train_labels[:split_idx]
     
     if not train_images:
+        # Print debug info about what files were found
+        image_files = [f for f in file_list if f.lower().endswith(('.png', '.jpg', '.jpeg'))]
+        print(f"Found {len(image_files)} image files but couldn't load any")
+        print(f"Image files: {image_files[:20]}")  # Show first 20 image files
         raise Exception("No training images found in ZIP file")
     
     print(f"Loaded {len(train_images)} training images, {len(test_images)} test images")
-    print(f"Label distribution - Train: {np.bincount(train_labels)}, Test: {np.bincount(test_labels)}")
+    
+    # Print class mapping for debugging
+    print(f"Class mapping: {class_to_label}")
+    
+    # Print label distribution for debugging
+    if train_labels:
+        unique_labels = sorted(set(train_labels + test_labels))
+        print(f"Unique labels found: {unique_labels}")
+        print(f"Number of classes: {len(class_to_label)}")
+        print(f"Train label distribution: {np.bincount(train_labels)}")
+        if test_labels:
+            print(f"Test label distribution: {np.bincount(test_labels)}")
+    
+    # Get dataset info for model building
+    if train_images:
+        sample_image = train_images[0]
+        if isinstance(sample_image, Image.Image):
+            image_size = sample_image.size[0]  # Assuming square images
+            channels = 3 if sample_image.mode == 'RGB' else 1
+        else:
+            image_size = sample_image.shape[0]
+            channels = sample_image.shape[2] if len(sample_image.shape) == 3 else 1
+    else:
+        image_size = 28
+        channels = 1
+    
+    # Create appropriate transform based on image type
+    if channels == 1:
+        transform = transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Normalize((0.1307,), (0.3081,))
+        ])
+    else:
+        transform = transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+        ])
     
     train_dataset = SimpleCustomDataset(train_images, train_labels, transform)
     test_dataset = SimpleCustomDataset(test_images, test_labels, transform)
     
-    return train_dataset, test_dataset
+    dataset_info = {
+        'channels': channels,
+        'image_size': image_size,
+        'num_classes': len(class_to_label)
+    }
+    
+    return train_dataset, test_dataset, dataset_info
 
 
 def train_generator(layers, config):
@@ -344,42 +464,101 @@ def load_temp_model():
         return None
     
     saved_data = torch.load(TEMP_MODEL_PATH, map_location=DEVICE)
-    model = build_dynamic_cnn(saved_data['layers']).to(DEVICE)
+    
+    # Use saved parameters if available, otherwise use defaults
+    input_channels = saved_data.get('input_channels', 1)
+    input_size = saved_data.get('input_size', 28)
+    num_classes = saved_data.get('num_classes', 10)
+    
+    model = build_dynamic_cnn(saved_data['layers'], input_channels, input_size, num_classes).to(DEVICE)
     model.load_state_dict(saved_data['state_dict'])
     model.eval()
     return model
 
+# Global variable to cache the test dataset
+_TEST_DATASET_CACHE = None
+
 def test_model(model):
-    transform = transforms.Compose([
-        transforms.ToTensor(),
-        transforms.Normalize((0.1307,), (0.3081,))
-    ])
+    global _TEST_DATASET_CACHE
     
-    test_dataset = datasets.MNIST('./data', train=False, transform=transform)
+    # Get the model parameters
+    saved_data = torch.load(TEMP_MODEL_PATH, map_location=DEVICE)
+    input_size = saved_data.get('input_size', 28)
+    input_channels = saved_data.get('input_channels', 1)
+    
+    # Use cached dataset if available
+    if _TEST_DATASET_CACHE is None:
+        # Create appropriate transform based on input channels
+        if input_channels == 1:
+            transform = transforms.Compose([
+                transforms.Grayscale(num_output_channels=1),
+                transforms.Resize((input_size, input_size)),
+                transforms.ToTensor(),
+                transforms.Normalize((0.1307,), (0.3081,))
+            ])
+        else:
+            transform = transforms.Compose([
+                transforms.Resize((input_size, input_size)),
+                transforms.ToTensor(),
+                transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+            ])
+        
+        # Use ImageFolder for simple folder structure
+        custom_dataset_path = './custom_data'
+        test_path = os.path.join(custom_dataset_path, 'test')
+        
+        if os.path.exists(test_path):
+            test_dataset = datasets.ImageFolder(root=test_path, transform=transform)
+            class_names = test_dataset.classes  # This gives us the actual folder names
+            print(f"Testing with custom dataset. Classes: {class_names}")
+        else:
+            # Fallback to default datasets
+            if input_channels == 1:
+                test_dataset = datasets.MNIST('./data', train=False, transform=transform)
+                class_names = [str(i) for i in range(10)]
+                print("Testing with MNIST dataset")
+            else:
+                test_dataset = datasets.CIFAR10('./data', train=False, transform=transform, download=True)
+                class_names = ['airplane', 'automobile', 'bird', 'cat', 'deer', 
+                              'dog', 'frog', 'horse', 'ship', 'truck']  # CIFAR-10 actual classes
+                print("Testing with CIFAR10 dataset")
+        
+        _TEST_DATASET_CACHE = (test_dataset, class_names)
+    else:
+        test_dataset, class_names = _TEST_DATASET_CACHE
+        print("Using cached test dataset")
+    
     test_loader = DataLoader(test_dataset, batch_size=100, shuffle=True)
     
     model.eval()
     
-    classes = [str(i) for i in range(10)]
-    
-    def view_classification(image, probabilities):
+    def view_classification(image, probabilities, actual_class, predicted_class):
         if matplotlib.pyplot.get_fignums():
             matplotlib.pyplot.close('all')
 
-        probabilities = probabilities.data.numpy().squeeze()
-        fig, (ax1, ax2) = plt.subplots(figsize=(6, 9), ncols=2)
+        probabilities = probabilities.cpu().data.numpy().squeeze()
+        fig, (ax1, ax2) = plt.subplots(figsize=(8, 6), ncols=2)
         
-        mean = 0.1307
-        std = 0.3081
-        image_denorm = image * std + mean
+        # Denormalize based on input channels
+        if input_channels == 1:
+            mean = 0.1307
+            std = 0.3081
+            image_denorm = image.cpu() * std + mean
+            ax1.imshow(image_denorm.squeeze(), cmap='gray')
+        else:
+            mean = 0.5
+            std = 0.5
+            image_denorm = image.cpu() * std + mean
+            image_display = image_denorm.permute(1, 2, 0)
+            ax1.imshow(image_display)
         
-        ax1.imshow(image_denorm.cpu().squeeze(), cmap='gray')
         ax1.axis('off')
+        ax1.set_title(f'Actual: {actual_class}\nPredicted: {predicted_class}', fontsize=12)
         
-        ax2.barh(np.arange(10), probabilities)
+        ax2.barh(np.arange(len(class_names)), probabilities)
         ax2.set_aspect(0.1)
-        ax2.set_yticks(np.arange(10))
-        ax2.set_yticklabels(classes)
+        ax2.set_yticks(np.arange(len(class_names)))
+        ax2.set_yticklabels(class_names)
         ax2.set_title('Class Probability')
         ax2.set_xlim(0, 1.1)
         plt.tight_layout()
@@ -390,74 +569,131 @@ def test_model(model):
         plt.close(fig)
         return buf.getvalue()
 
-    images, labels = next(iter(test_loader))
-    image_number = random.randint(0, 99)
+    # Get a batch and find correct channels
+    for images, labels in test_loader:
+        if images.shape[1] == input_channels:
+            break
+    else:
+        images, labels = next(iter(test_loader))
+        if input_channels == 1 and images.shape[1] == 3:
+            images = torch.mean(images, dim=1, keepdim=True)
+        elif input_channels == 3 and images.shape[1] == 1:
+            images = images.repeat(1, 3, 1, 1)
+
+    # ONLY resize if image size doesn't match model input size
+    if images.shape[2] != input_size or images.shape[3] != input_size:
+        resize_transform = transforms.Resize((input_size, input_size))
+        images_resized = torch.stack([resize_transform(img) for img in images])
+        images = images_resized
+
+    image_number = random.randint(0, len(images) - 1)
 
     image = images[image_number]
-    actual_label = labels[image_number].item()
+    actual_label_idx = labels[image_number].item()
     batched_image = image.unsqueeze(0).to(DEVICE)
 
     with torch.no_grad():
         outputs = model(batched_image)
     
-    probabilities = torch.nn.functional.softmax(outputs, dim=1).squeeze().cpu()
-    
-    probabilities = torch.nn.functional.softmax(outputs, dim=1).squeeze().cpu()
+    probabilities = torch.nn.functional.softmax(outputs, dim=1).squeeze()
+    predicted_label_idx = torch.argmax(probabilities).item()
 
-# Debug: Check the shape
-    print(f"Output shape: {outputs.shape}, Probabilities shape: {probabilities.shape}")
+    # FIX: Use the actual class names from the dataset
+    actual_class = class_names[actual_label_idx]
+    predicted_class = class_names[predicted_label_idx]
 
-    # Make sure probabilities has 10 elements (one per class)
+    print(f"Actual: {actual_class} ({actual_label_idx}), Predicted: {predicted_class} ({predicted_label_idx})")
+
+    # Make sure probabilities has correct number of elements
     if probabilities.dim() == 0:
-        probabilities = torch.nn.functional.softmax(outputs, dim=1).squeeze(0).cpu()
+        probabilities = torch.nn.functional.softmax(outputs, dim=1).squeeze(0)
         
     # Return the image bytes
-    return view_classification(image, probabilities)
+    return view_classification(image, probabilities, actual_class, predicted_class)
 
 def test_model_custom_image(model, image):
+    # Get the model parameters
+    saved_data = torch.load(TEMP_MODEL_PATH, map_location=DEVICE)
+    input_size = saved_data.get('input_size', 28)
+    input_channels = saved_data.get('input_channels', 1)
     
-    # Convert image to grayscale if needed and resize to 28x28
+    # Get class names from custom dataset
+    custom_dataset_path = './custom_data'
+    test_path = os.path.join(custom_dataset_path, 'test')
+    
+    if os.path.exists(test_path):
+        test_dataset = datasets.ImageFolder(root=test_path)
+        class_names = test_dataset.classes  # Use the actual class names
+    else:
+        # Use correct CIFAR-10 class names for fallback
+        class_names = ['airplane', 'automobile', 'bird', 'cat', 'deer', 
+                      'dog', 'frog', 'horse', 'ship', 'truck']
+    
+    # Convert image if needed
     if isinstance(image, np.ndarray):
         image = Image.fromarray(image)
     
-    # Ensure grayscale
-    if image.mode != 'L':
-        image = image.convert('L')
-    
-    # 28x28 (MNIST size to take less data + work with the database it has already)
-    image = image.resize((28, 28), Image.Resampling.LANCZOS)
-    
-    # Apply the same transform as training
-    transform = transforms.Compose([
-        transforms.ToTensor(),
-        transforms.Normalize((0.1307,), (0.3081,))
-    ])
+    # Handle color/grayscale based on model
+    if input_channels == 1:
+        if image.mode != 'L':
+            image = image.convert('L')
+        transform = transforms.Compose([
+            transforms.Resize((input_size, input_size)),
+            transforms.ToTensor(),
+            transforms.Normalize((0.1307,), (0.3081,))
+        ])
+    else:
+        if image.mode != 'RGB':
+            image = image.convert('RGB')
+        transform = transforms.Compose([
+            transforms.Resize((input_size, input_size)),
+            transforms.ToTensor(),
+            transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+        ])
     
     # Transform the image
     image_tensor = transform(image)
+
+# ONLY resize if needed
+    if image_tensor.shape[1] != input_size or image_tensor.shape[2] != input_size:
+        resize_transform = transforms.Resize((input_size, input_size))
+        image_tensor = resize_transform(image_tensor)
+    
+    # Ensure the image tensor has the correct number of channels
+    if input_channels == 1 and image_tensor.shape[0] == 3:
+        image_tensor = torch.mean(image_tensor, dim=0, keepdim=True)
+    elif input_channels == 3 and image_tensor.shape[0] == 1:
+        image_tensor = image_tensor.repeat(3, 1, 1)
     
     model.eval()
     
-    classes = [str(i) for i in range(10)]
-    
-    def view_classification(image, probabilities):
+    def view_classification(image, probabilities, predicted_class):
         if matplotlib.pyplot.get_fignums():
             matplotlib.pyplot.close('all')
 
-        probabilities = probabilities.data.numpy().squeeze()
-        fig, (ax1, ax2) = plt.subplots(figsize=(6, 9), ncols=2)
+        probabilities = probabilities.cpu().data.numpy().squeeze()
+        fig, (ax1, ax2) = plt.subplots(figsize=(8, 6), ncols=2)
         
-        mean = 0.1307
-        std = 0.3081
-        image_denorm = image * std + mean
+        # Denormalize based on input channels
+        if input_channels == 1:
+            mean = 0.1307
+            std = 0.3081
+            image_denorm = image.cpu() * std + mean
+            ax1.imshow(image_denorm.squeeze(), cmap='gray')
+        else:
+            mean = 0.5
+            std = 0.5
+            image_denorm = image.cpu() * std + mean
+            image_display = image_denorm.permute(1, 2, 0)
+            ax1.imshow(image_display)
         
-        ax1.imshow(image_denorm.cpu().squeeze(), cmap='gray')
         ax1.axis('off')
+        ax1.set_title(f'Predicted: {predicted_class}', fontsize=12)
         
-        ax2.barh(np.arange(10), probabilities)
+        ax2.barh(np.arange(len(class_names)), probabilities)
         ax2.set_aspect(0.1)
-        ax2.set_yticks(np.arange(10))
-        ax2.set_yticklabels(classes)
+        ax2.set_yticks(np.arange(len(class_names)))
+        ax2.set_yticklabels(class_names)
         ax2.set_title('Class Probability')
         ax2.set_xlim(0, 1.1)
         plt.tight_layout()
@@ -468,23 +704,29 @@ def test_model_custom_image(model, image):
         plt.close(fig)
         return buf.getvalue()
 
-    # Prepare image for model (add batch dimension)
+    # Prepare image for model
     batched_image = image_tensor.unsqueeze(0).to(DEVICE)
 
     with torch.no_grad():
         outputs = model(batched_image)
     
-    probabilities = torch.nn.functional.softmax(outputs, dim=1).squeeze().cpu()
+    probabilities = torch.nn.functional.softmax(outputs, dim=1).squeeze()
+    predicted_label_idx = torch.argmax(probabilities).item()
+    
+    # FIX: Use the actual class names
+    predicted_class = class_names[predicted_label_idx]
 
-    # Debug: Check the shape
-    print(f"Output shape: {outputs.shape}, Probabilities shape: {probabilities.shape}")
+    print(f"Predicted: {predicted_class} ({predicted_label_idx})")
 
-    # Make sure probabilities has 10 elements (one per class)
+    # Make sure probabilities has correct number of elements
     if probabilities.dim() == 0:
-        probabilities = torch.nn.functional.softmax(outputs, dim=1).squeeze(0).cpu()
+        probabilities = torch.nn.functional.softmax(outputs, dim=1).squeeze(0)
         
     # Return the image bytes
-    return view_classification(image_tensor, probabilities)
+    return view_classification(image_tensor, probabilities, predicted_class)
+
+
+# ---------------
 
 def download_model():
     """Returns the bytes of the saved model file for download."""
