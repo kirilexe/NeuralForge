@@ -14,6 +14,10 @@ import json
 import threading
 import queue
 from PIL import Image
+import zipfile
+import pandas as pd
+from PIL import Image
+from torch.utils.data import Dataset
 
 TEMP_MODEL_PATH = './temp_model_state.pth'
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -97,23 +101,21 @@ def train_model(layers, config, progress_callback=None):
     has_custom_dataset = os.path.exists(custom_dataset_path) and os.listdir(custom_dataset_path)
     
     if has_custom_dataset:
-        # TODO: Implement your custom dataset loading logic here
-        # For now, we'll fall back to MNIST but you can add your custom dataset logic
-        print("Custom dataset detected but using MNIST for now")
-        # You would implement custom dataset loading based on your file format
-        # For example:
-        # train_dataset = YourCustomDataset(custom_dataset_path, train=True, transform=transform)
-        # test_dataset = YourCustomDataset(custom_dataset_path, train=False, transform=transform)
-        
-        # Fall back to MNIST for this example
-        train_dataset = datasets.MNIST('./data', train=True, download=True, transform=transform)
-        test_dataset = datasets.MNIST('./data', train=False, transform=transform)
+        print("Custom dataset detected - loading from ZIP file...")
+        try:
+            train_dataset, test_dataset = load_custom_zip_dataset(custom_dataset_path, transform)
+            print("✅ Custom dataset loaded successfully!")
+        except Exception as e:
+            print(f"❌ Failed to load custom dataset: {e}")
+            print("🔄 Falling back to MNIST dataset...")
+            train_dataset = datasets.MNIST('./data', train=True, download=True, transform=transform)
+            test_dataset = datasets.MNIST('./data', train=False, transform=transform)
     else:
         # Use MNIST as default
         train_dataset = datasets.MNIST('./data', train=True, download=True, transform=transform)
         test_dataset = datasets.MNIST('./data', train=False, transform=transform)
     
-    # Rest of the function remains the same...
+    # Rest of the function remains exactly the same...
     subset_indices = torch.randperm(len(train_dataset))[:5000] 
     train_subset = torch.utils.data.Subset(train_dataset, subset_indices)
     
@@ -177,15 +179,6 @@ def train_model(layers, config, progress_callback=None):
         epoch_accuracy = correct / total
         final_loss, final_accuracy = epoch_loss, epoch_accuracy
 
-        # Send data to frontend via SSE for the real time updating graph
-        """
-        data = {
-            "epoch": epoch,
-            "loss": final_loss,
-            "accuracy": final_accuracy
-        }
-        """
-
         # Call optional progress callback for real-time streaming (e.g., SSE or websocket)
         if progress_callback is not None:
             try:
@@ -206,6 +199,109 @@ def train_model(layers, config, progress_callback=None):
         torch.save(save_data, TEMP_MODEL_PATH)
         
     return output_log, final_loss, final_accuracy
+
+
+# ===== SIMPLE CUSTOM DATASET LOADING =====
+
+class SimpleCustomDataset(torch.utils.data.Dataset):
+    """Simple dataset for images and labels."""
+    def __init__(self, images, labels, transform=None):
+        self.images = images
+        self.labels = labels
+        self.transform = transform
+        
+    def __len__(self):
+        return len(self.images)
+    
+    def __getitem__(self, idx):
+        image = self.images[idx]
+        label = self.labels[idx]
+        
+        if self.transform:
+            image = self.transform(image)
+            
+        return image, label
+
+def load_custom_zip_dataset(custom_dataset_path, transform):
+    """Load dataset from ZIP file - handles MNIST PNG folder structure."""
+    import zipfile
+    from PIL import Image
+    import io
+    
+    # Find the first ZIP file in custom_data folder
+    zip_files = [f for f in os.listdir(custom_dataset_path) if f.endswith('.zip')]
+    if not zip_files:
+        raise Exception("No ZIP file found in custom_data folder")
+    
+    zip_path = os.path.join(custom_dataset_path, zip_files[0])
+    print(f"Loading from ZIP: {zip_files[0]}")
+    
+    train_images = []
+    train_labels = []
+    test_images = []
+    test_labels = []
+    
+    with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+        # Get all files in the ZIP
+        file_list = zip_ref.namelist()
+        print(f"Files in ZIP: {len(file_list)}")
+        
+        # Look for training/ and testing/ folders (MNIST PNG structure)
+        for file_path in file_list:
+            if file_path.lower().endswith(('.png', '.jpg', '.jpeg')):
+                # Parse the path to get label and split type
+                parts = file_path.split('/')
+                
+                # Handle different naming conventions
+                if 'training' in parts or 'train' in parts:
+                    # Look for digit folder name
+                    for part in parts:
+                        if part.isdigit() and 0 <= int(part) <= 9:
+                            label = int(part)
+                            try:
+                                with zip_ref.open(file_path) as file:
+                                    image_data = file.read()
+                                    image = Image.open(io.BytesIO(image_data)).convert('L')
+                                    train_images.append(image)
+                                    train_labels.append(label)
+                            except Exception as e:
+                                print(f"Warning: Could not load {file_path}: {e}")
+                            break
+                
+                elif 'testing' in parts or 'test' in parts:
+                    # Look for digit folder name  
+                    for part in parts:
+                        if part.isdigit() and 0 <= int(part) <= 9:
+                            label = int(part)
+                            try:
+                                with zip_ref.open(file_path) as file:
+                                    image_data = file.read()
+                                    image = Image.open(io.BytesIO(image_data)).convert('L')
+                                    test_images.append(image)
+                                    test_labels.append(label)
+                            except Exception as e:
+                                print(f"Warning: Could not load {file_path}: {e}")
+                            break
+        
+        # If we found images but no test images, split train 80/20
+        if train_images and not test_images:
+            print("No test folder found, splitting train data 80/20")
+            split_idx = int(0.8 * len(train_images))
+            test_images = train_images[split_idx:]
+            test_labels = train_labels[split_idx:]
+            train_images = train_images[:split_idx]
+            train_labels = train_labels[:split_idx]
+    
+    if not train_images:
+        raise Exception("No training images found in ZIP file")
+    
+    print(f"Loaded {len(train_images)} training images, {len(test_images)} test images")
+    print(f"Label distribution - Train: {np.bincount(train_labels)}, Test: {np.bincount(test_labels)}")
+    
+    train_dataset = SimpleCustomDataset(train_images, train_labels, transform)
+    test_dataset = SimpleCustomDataset(test_images, test_labels, transform)
+    
+    return train_dataset, test_dataset
 
 
 def train_generator(layers, config):
