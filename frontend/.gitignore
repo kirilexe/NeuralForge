@@ -28,4 +28,4 @@ custom_data/*
 !custom_data/.gitkeep
 
 # Ignore temp extracted folder entirely
-temp_extracted/
+temp_extracted/*
