@@ -289,38 +289,35 @@ export default function TrainView() {
                   { id: 'leftAxisId', width: 50 },
                   { id: 'rightAxisId', position: 'right' },
                 ]}
-                // small fixed height so it fits under the console
-                slotProps={{ // ????? for whatever reason this changes the color to white but the ten thousand lines of code below don't?????????????
+                slotProps={{
                   legend: {
                     sx: {
                       fontSize: 14,
                       color: 'white'
                     }
                   }
-                }
-
-                }
+                }}
                 sx={{ 
                   height: 350,
-                  '& text': {
+                  // More specific selectors
+                  '& .MuiChartsAxis-root .MuiChartsAxis-tickLabel': {
                     fill: 'white',
                   },
-                  '& line': {
+                  '& .MuiChartsAxis-root .MuiChartsAxis-label': {
+                    fill: 'white',
+                  },
+                  '& .MuiChartsAxis-root line': {
                     stroke: 'white',
                   },
-                  '& .MuiChartsAxis-line': {
-                    stroke: 'white !important',
-                  },  
-                  '& .MuiChartsAxis-tick': {
-                    stroke: 'white !important',
+                  '& .MuiChartsAxis-root .MuiChartsAxis-line': {
+                    stroke: 'white',
                   },
-                  '& .MuiChartsLegend-label': {
-                    fill: 'white !important',
-                    text: 'white !important',
+                  '& .MuiChartsAxis-root .MuiChartsAxis-tick': {
+                    stroke: 'white',
                   },
-                  '& .MuiChartsLegend-series text tspan': {
+                  '& .MuiChartsAxis-root text': {
                     fill: 'white',
-                  }
+                  },
                 }}
               />
               <span className="flex"> {/* to align side by side */}

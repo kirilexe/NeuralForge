@@ -127,8 +127,8 @@ export default function DatasetSelector() {
             disabled={isUploading || (selectedDataset === "custom" && !uploadedFile)}
             className={`px-4 py-2 rounded-md font-medium transition-colors ${
               (isUploading || (selectedDataset === "custom" && !uploadedFile))
-                ? "bg-gray-600 text-gray-400 cursor-not-allowed"
-                : "bg-blue-600 hover:bg-blue-700 text-white cursor-pointer"
+                ? "btn-transparent-white bg-gray-600"
+                : "btn-transparent-white"
             }`}
           >
             {isUploading ? "Uploading..." : 
