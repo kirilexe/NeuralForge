@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import Orb from '../components/home/Orb';
 
 function UserHomePage() {
   const [isVisible, setIsVisible] = useState(false);
@@ -27,20 +28,26 @@ function UserHomePage() {
   ];
 
   return (
-    <div className="min-h-screen w-full bg-[#060010] text-white pt-24 px-6">
-      <div className="max-w-4xl mx-auto">
-        {/* Header */}
+    <div className="min-h-screen w-full bg-[#060010] text-white pt-24 px-6 relative">
+      {/* Orb with lower z-index */}
+      <div className="">
+        <Orb />
+      </div>
+      
+      {/* Content with higher z-index - moved to left */}
+      <div className="max-w-2xl mx-0 relative z-10">
+        {/* Header - aligned left */}
         <div className={`transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-          <h1 className="text-4xl md:text-5xl font-bold mb-4 text-center font-mono">
+          <h1 className="text-4xl md:text-5xl font-bold mb-4 font-mono text-left">
             Welcome back!
           </h1>
-          <p className="text-gray-400 text-lg text-center mb-12">
+          <p className="text-gray-400 text-lg mb-12 text-left">
             Choose what network to begin with
           </p>
         </div>
 
-        {/* Network Options Grid */}
-        <div className="grid md:grid-cols-2 gap-8 mb-20">
+        {/* Network Options Grid - single column */}
+        <div className="grid gap-8 mb-20">
           {networkOptions.map((option, idx) => (
             <div
               key={option.id}
@@ -90,14 +97,14 @@ function UserHomePage() {
           ))}
         </div>
 
-        {/* Quick Stats */}
+        {/* Quick Stats - aligned left */}
         <div 
           className={`border-t border-gray-800 pt-12 transition-all duration-1000 ${
             isVisible ? 'opacity-100' : 'opacity-0'
           }`}
           style={{ transitionDelay: '500ms' }}
         >
-          <div className="grid grid-cols-3 gap-8 text-center">
+          <div className="grid grid-cols-3 gap-8 text-left">
             <div>
               <div className="text-2xl font-bold mb-2">0</div>
               <div className="text-gray-400 text-sm">Models Created</div>
