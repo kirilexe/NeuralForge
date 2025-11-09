@@ -31,7 +31,7 @@ export default function Dashboard() {
 
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#0f172a]">
+   <div className="flex flex-col min-h-screen bg-gradient-to-br from-[#0f172a] via-[#110e38] to-[#0f172a]">
 
   <NeuralBackground />
   {/* Ensure UI is above the background canvas */}

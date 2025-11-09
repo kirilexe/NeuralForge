@@ -86,7 +86,7 @@ const handleDeleteModel = async (modelId: string) => {
 
   return (
     // Main container background and border color adjusted to match the aesthetic.
-    <div className="w-full p-4 bg-[#1e293b] rounded-md border border-[#374151] shadow-2xl">
+    <div className="w-full p-4 bg-[#1e2538] rounded-md border border-[#374151] shadow-2xl">
       <div className="flex justify-between items-center mb-4">
         <h3 className="text-xl font-semibold text-white">Your Models</h3>
         {/* Refresh button styled to resemble the 'Add' buttons in the image */}
