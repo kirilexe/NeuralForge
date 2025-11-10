@@ -1,0 +1,2 @@
+# exclude the temp cache files
+temp_extracted/*
