@@ -617,17 +617,30 @@ def test_model_custom_image(model, image):
     input_size = saved_data.get('input_size', 28)
     input_channels = saved_data.get('input_channels', 1)
     
-    # Get class names from custom dataset
-    custom_dataset_path = './custom_data'
-    test_path = os.path.join(custom_dataset_path, 'test')
+    # FIX: Get class names from the same source as test_model
+    global _TEST_DATASET_CACHE
     
-    if os.path.exists(test_path):
-        test_dataset = datasets.ImageFolder(root=test_path)
-        class_names = test_dataset.classes  # Use the actual class names
+    if _TEST_DATASET_CACHE is not None:
+        # Use cached class names from test_model
+        _, class_names = _TEST_DATASET_CACHE
     else:
-        # Use correct CIFAR-10 class names for fallback
-        class_names = ['airplane', 'automobile', 'bird', 'cat', 'deer', 
-                      'dog', 'frog', 'horse', 'ship', 'truck']
+        # Get class names the same way test_model does
+        custom_dataset_path = './custom_data'
+        test_path = os.path.join(custom_dataset_path, 'test')
+        
+        if os.path.exists(test_path):
+            test_dataset = datasets.ImageFolder(root=test_path)
+            class_names = test_dataset.classes
+            print(f"Using custom dataset classes: {class_names}")
+        else:
+            # Use the same fallback as test_model
+            if input_channels == 1:
+                class_names = [str(i) for i in range(10)]
+                print("Using MNIST class names (0-9)")
+            else:
+                class_names = ['airplane', 'automobile', 'bird', 'cat', 'deer', 
+                              'dog', 'frog', 'horse', 'ship', 'truck']
+                print("Using CIFAR-10 class names")
     
     # Convert image if needed
     if isinstance(image, np.ndarray):
@@ -654,7 +667,7 @@ def test_model_custom_image(model, image):
     # Transform the image
     image_tensor = transform(image)
 
-# ONLY resize if needed
+    # ONLY resize if needed
     if image_tensor.shape[1] != input_size or image_tensor.shape[2] != input_size:
         resize_transform = transforms.Resize((input_size, input_size))
         image_tensor = resize_transform(image_tensor)
@@ -713,10 +726,11 @@ def test_model_custom_image(model, image):
     probabilities = torch.nn.functional.softmax(outputs, dim=1).squeeze()
     predicted_label_idx = torch.argmax(probabilities).item()
     
-    # FIX: Use the actual class names
+    # Use the correct class names
     predicted_class = class_names[predicted_label_idx]
 
     print(f"Predicted: {predicted_class} ({predicted_label_idx})")
+    print(f"Available classes: {class_names}")
 
     # Make sure probabilities has correct number of elements
     if probabilities.dim() == 0:
