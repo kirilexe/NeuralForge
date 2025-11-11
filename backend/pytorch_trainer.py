@@ -18,9 +18,91 @@ import zipfile
 import pandas as pd
 from PIL import Image
 from torch.utils.data import Dataset
+import plotly.graph_objects as go
 
 TEMP_MODEL_PATH = './temp_model_state.pth'
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+CONFUSION_MATRIX_DATA = None
+
+def plot_confusion_matrix():
+    """Creates and returns a Plotly confusion matrix as image bytes."""
+    global CONFUSION_MATRIX_DATA
+    
+    if CONFUSION_MATRIX_DATA is None:
+        # Return a simple "no data" image
+        fig = go.Figure()
+        fig.update_layout(
+            title="No confusion matrix data available. Train a model first.",
+            xaxis_title="Predicted Label",
+            yaxis_title="True Label",
+        )
+        img_bytes = fig.to_image(format="png")
+        return img_bytes
+    
+    predictions = CONFUSION_MATRIX_DATA['predictions']
+    labels = CONFUSION_MATRIX_DATA['labels']
+    num_classes = CONFUSION_MATRIX_DATA['num_classes']
+    
+    # Calculate confusion matrix
+    confusion_mat = np.zeros((num_classes, num_classes), dtype=int)
+    for true_label, pred_label in zip(labels, predictions):
+        confusion_mat[true_label, pred_label] += 1
+    
+    # Get class names from the same source as testing
+    global _TEST_DATASET_CACHE
+    
+    if _TEST_DATASET_CACHE is not None:
+        # Use cached class names from test dataset
+        _, class_names = _TEST_DATASET_CACHE
+        print(f"Using cached class names: {class_names}")
+    else:
+        # Get class names the same way test_model does
+        custom_dataset_path = './custom_data'
+        test_path = os.path.join(custom_dataset_path, 'test')
+        
+        if os.path.exists(test_path):
+            test_dataset = datasets.ImageFolder(root=test_path)
+            class_names = test_dataset.classes
+            print(f"Using custom dataset classes: {class_names}")
+        else:
+            # Use the same fallback as test_model
+            saved_data = torch.load(TEMP_MODEL_PATH, map_location=DEVICE)
+            input_channels = saved_data.get('input_channels', 1)
+            
+            if input_channels == 1:
+                class_names = [str(i) for i in range(10)]
+                print("Using MNIST class names (0-9)")
+            else:
+                class_names = ['airplane', 'automobile', 'bird', 'cat', 'deer', 
+                              'dog', 'frog', 'horse', 'ship', 'truck']
+                print("Using CIFAR-10 class names")
+    
+    # Make sure we have the right number of class names
+    if len(class_names) != num_classes:
+        print(f"Warning: Class names count ({len(class_names)}) doesn't match num_classes ({num_classes}). Using numeric labels.")
+        class_names = [str(i) for i in range(num_classes)]
+    
+    # Create Plotly heatmap
+    fig = go.Figure(data=go.Heatmap(
+        z=confusion_mat,
+        x=class_names,  # Use actual class names instead of numeric indices
+        y=class_names,  # Use actual class names instead of numeric indices
+        colorscale='Viridis',
+        hoverongaps=False,
+        hovertemplate='True: %{y}<br>Predicted: %{x}<br>Count: %{z}<extra></extra>'
+    ))
+    
+    fig.update_layout(
+        title='Confusion Matrix',
+        xaxis_title='Predicted Label',
+        yaxis_title='True Label',
+        width=600,
+        height=600
+    )
+    
+    # Convert to image bytes
+    img_bytes = fig.to_image(format="png")
+    return img_bytes
 
 def build_dynamic_cnn(layers, input_channels=1, input_size=28, num_classes=10):
     model_layers = []
@@ -109,7 +191,10 @@ def train_model(layers, config, progress_callback=None):
     """Loads data, builds model, and runs a basic PyTorch training loop."""
 
     global _TEST_DATASET_CACHE
+    global CONFUSION_MATRIX_DATA  # Access global variable
+    
     _TEST_DATASET_CACHE = None
+    CONFUSION_MATRIX_DATA = None  # Reset confusion matrix data
     
     # Check if custom dataset exists
     custom_dataset_path = './custom_data'
@@ -204,6 +289,11 @@ def train_model(layers, config, progress_callback=None):
         correct = 0
         total = 0
         
+        # Collect predictions for confusion matrix (only on last epoch)
+        if epoch == epochs:
+            all_predictions = []
+            all_labels = []
+        
         with torch.no_grad():
             for images, labels in test_loader:
                 images, labels = images.to(DEVICE), labels.to(DEVICE)
@@ -211,9 +301,22 @@ def train_model(layers, config, progress_callback=None):
                 _, predicted = torch.max(outputs.data, 1)
                 total += labels.size(0)
                 correct += (predicted == labels).sum().item()
+                
+                # Store predictions and labels for confusion matrix (only on last epoch)
+                if epoch == epochs:
+                    all_predictions.extend(predicted.cpu().numpy())
+                    all_labels.extend(labels.cpu().numpy())
         
         epoch_accuracy = correct / total
         final_loss, final_accuracy = epoch_loss, epoch_accuracy
+
+        # Store confusion matrix data on final epoch
+        if epoch == epochs:
+            CONFUSION_MATRIX_DATA = {
+                'predictions': all_predictions,
+                'labels': all_labels,
+                'num_classes': num_classes
+            }
 
         # Call optional progress callback for real-time streaming (e.g., SSE or websocket)
         if progress_callback is not None:

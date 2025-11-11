@@ -32,6 +32,9 @@ export default function TrainView() {
   // the refs into these arrays whenever new epoch data arrives.
   const [chartLoss, setChartLoss] = useState<number[]>([]);
   const [chartAcc, setChartAcc] = useState<number[]>([]);
+  // Add state for confusion matrix
+  const [confusionMatrixUrl, setConfusionMatrixUrl] = useState<string>('');
+  const [isLoadingConfusionMatrix, setIsLoadingConfusionMatrix] = useState(false);
   
   const { layers } = useModel(); 
 
@@ -41,6 +44,35 @@ export default function TrainView() {
       ...prev,
       [name]: type === 'number' ? parseFloat(value) : value,
     }));
+  };
+
+  // Fixed fetchConfusionMatrix function
+  const fetchConfusionMatrix = async () => {
+    setIsLoadingConfusionMatrix(true);
+    setConfusionMatrixUrl('');
+    try {
+      const response = await fetch('http://127.0.0.1:5000/confusion_matrix?' + new Date().getTime());
+      
+      if (response.ok) {
+        const blob = await response.blob();
+        
+        // Check if it's actually an image
+        if (blob.type.startsWith('image/')) {
+          const url = URL.createObjectURL(blob);
+          setConfusionMatrixUrl(url);
+          setConsoleOutput(prev => [...prev, "Confusion Matrix: Loaded successfully"]);
+        } else {
+          // Handle non-image response (HTML error page)
+          setConsoleOutput(prev => [...prev, "Confusion Matrix: Server returned HTML instead of image. Route may not exist."]);
+        }
+      } else {
+        setConsoleOutput(prev => [...prev, `Confusion Matrix: Failed to load (HTTP ${response.status})`]);
+      }
+    } catch (error) {
+      setConsoleOutput(prev => [...prev, `Confusion Matrix: Error - ${error}`]);
+    } finally {
+      setIsLoadingConfusionMatrix(false);
+    }
   };
   
   const startTraining = useCallback(async () => {
@@ -256,10 +288,18 @@ export default function TrainView() {
           >
             {isTraining ? 'Training in Progress...' : 'Start Training'}
           </button>
+
+          {/* Add Confusion Matrix Button */}
+          <button 
+            onClick={fetchConfusionMatrix}
+            disabled={isLoadingConfusionMatrix}
+            className="btn-transparent-white mt-2"
+          >
+            {isLoadingConfusionMatrix ? 'Loading...' : 'Show Confusion Matrix'}
+          </button>
         </div>
         <div style={{ flex: 1 }}>
           <h2 className="underline-title-text">Training Console Output</h2>
-          {/*}
           <div 
             style={{ 
               backgroundColor: '#272b35', 
@@ -327,6 +367,25 @@ export default function TrainView() {
                 <p className="text-sm font-semibold">Accuracy: {chartAcc.length ? (Number(chartAcc[chartAcc.length - 1]) * 100).toFixed(2) + "%" : "—"}</p>
               </span>
             </div>
+
+            {/* Confusion Matrix Display */}
+            {confusionMatrixUrl && (
+              <div style={{ marginTop: '16px' }} className="mt-4">
+                <h3 className="underline-title-text">Confusion Matrix</h3>
+                <div style={{ background: '#0b1220', padding: '12px', borderRadius: 8 }} className="text-white">
+                  <img 
+                    src={confusionMatrixUrl} 
+                    alt="Confusion Matrix" 
+                    style={{ maxWidth: '100%', height: 'auto' }}
+                    onLoad={() => console.log('Confusion matrix image loaded successfully')}
+                    onError={() => {
+                      console.error('Failed to load confusion matrix image');
+                      setConsoleOutput(prev => [...prev, "Confusion Matrix: Failed to display image"]);
+                    }}
+                  />
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

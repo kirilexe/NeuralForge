@@ -1,8 +1,9 @@
 from flask import Flask, request, jsonify, make_response, Response, send_file
-from pytorch_trainer import train_model, load_temp_model, test_model, train_generator, test_model_custom_image, download_model, TEMP_MODEL_PATH
+from pytorch_trainer import train_model, load_temp_model, test_model, train_generator, test_model_custom_image, download_model, plot_confusion_matrix, TEMP_MODEL_PATH
 import os
 from io import BytesIO
 import shutil
+import plotly.graph_objects as go
 
 CUSTOM_DATASET_PATH = './custom_data'
 
@@ -31,6 +32,46 @@ def train_model_endpoint():
         "loss": final_loss,
         "accuracy": final_accuracy
     })
+
+@app.route('/confusion_matrix')
+def get_confusion_matrix():
+    """Returns the confusion matrix as a PNG image response with caching."""
+    try:
+        img_bytes = plot_confusion_matrix()
+        
+        # Check if we got valid image bytes
+        if not img_bytes or len(img_bytes) == 0:
+            raise ValueError("No confusion matrix data available - train a model first")
+            
+        response = Response(img_bytes, mimetype='image/png')
+        # Add caching headers to prevent unnecessary regeneration
+        response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '0'
+        return response
+        
+    except Exception as e:
+        print(f"Error in confusion matrix route: {str(e)}")  # Debug print
+        # Return a proper error image
+        fig = go.Figure()
+        fig.update_layout(
+            title=f"No Confusion Matrix Available<br>Train a model first",
+            width=600,
+            height=400,
+            font=dict(size=16),
+            xaxis=dict(visible=False),
+            yaxis=dict(visible=False)
+        )
+        # Add some text in the middle
+        fig.add_annotation(
+            text="Train a model to see the confusion matrix",
+            xref="paper", yref="paper",
+            x=0.5, y=0.5,
+            showarrow=False,
+            font=dict(size=14)
+        )
+        img_bytes = fig.to_image(format="png")
+        return Response(img_bytes, mimetype='image/png')
 
 @app.route('/train_stream', methods=['POST'])
 def train_stream():
