@@ -1,6 +1,7 @@
 import { useState } from 'react';
 //@ts-ignore
 import { useAuth } from '../../contexts/authContext/index';
+import { db } from '../../firebase/firebase';
 
 interface NavbarProps {
   onNavigate: (page: string) => void;
@@ -8,7 +9,7 @@ interface NavbarProps {
 }
 
 function Navbar({ onNavigate, currentPage }: NavbarProps) {
-  const { currentUser } = useAuth();
+  const { currentUser, userRole } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
@@ -96,20 +97,52 @@ function Navbar({ onNavigate, currentPage }: NavbarProps) {
               Dashboard
             </a>
 
-            {/* Auth Dropdown */}
+            {/* AUTH DROPDOWN */}
+
             <div className="relative">
               <button
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-300 ease-out flex items-center gap-1.5 ${isDropdownOpen ? 'text-white bg-white/10 shadow-[0_0_12px_rgba(168,85,247,0.25)]' : 'text-gray-400 hover:text-white hover:bg-white/5 hover:shadow-[0_0_8px_rgba(255,255,255,0.15)]'}`}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-300 ease-out flex items-center gap-2 ${
+                  isDropdownOpen
+                    ? 'text-white bg-white/10 shadow-[0_0_12px_rgba(168,85,247,0.25)]'
+                    : 'text-gray-400 hover:text-white hover:bg-white/5 hover:shadow-[0_0_8px_rgba(255,255,255,0.15)]'
+                }`}
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
               >
-                <span className="max-w-[120px] truncate">
-                  {currentUser ? currentUser.email.split('@')[0] : 'Auth'}
-                </span>
-                <svg className={`w-3.5 h-3.5 transition-transform duration-300 ease-out ${isDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                <div className="flex items-center gap-1.5 max-w-[140px] truncate">
+                  <span className="truncate">
+                    {currentUser ? currentUser.email.split('@')[0] : 'Auth'}
+                  </span>
+
+                  {/* Role badge inside button */}
+                  {currentUser && (
+                    <div
+                      className="px-1.5 py-[1px] rounded-md text-[10px] font-medium text-purple-300 
+                                bg-purple-500/10 border border-purple-700/30 
+                                shadow-[0_0_4px_rgba(168,85,247,0.25)] 
+                                backdrop-blur-sm select-none"
+                    >
+                      {userRole === 'admin' ? 'Admin' : 'User'}
+                    </div>
+                  )}
+                </div>
+
+                <svg
+                  className={`w-3.5 h-3.5 transition-transform duration-300 ease-out ${
+                    isDropdownOpen ? 'rotate-180' : ''
+                  }`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 9l-7 7-7-7"
+                  />
                 </svg>
               </button>
-              {/* Dropdown Menu */}
+
               {isDropdownOpen && (
                 <div className="absolute right-0 mt-2 w-48 rounded-xl bg-black/60 backdrop-blur-xl border border-white/10 shadow-lg z-50">
                   <div className="py-2">
@@ -152,6 +185,8 @@ function Navbar({ onNavigate, currentPage }: NavbarProps) {
                 </div>
               )}
             </div>
+
+
 
             <a
               className="px-3 py-1.5 rounded-lg text-sm font-medium
