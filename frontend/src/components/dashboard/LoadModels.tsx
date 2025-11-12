@@ -15,7 +15,7 @@ interface SavedModel {
 
 export default function LoadModels() {
   const { setLayers } = useModel();
-  const { currentUser } = useAuth();
+  const { currentUser, role } = useAuth();
   const [savedModels, setSavedModels] = useState<SavedModel[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState('');

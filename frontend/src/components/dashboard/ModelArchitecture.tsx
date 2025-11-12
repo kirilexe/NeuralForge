@@ -64,7 +64,7 @@ export default function ModelArchitecture({ layers, setLayers }: ModelArchitectu
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
           </svg>
           <p className="text-gray-400 text-sm">Your model is empty.</p>
-          <p className="text-gray-500 text-sm">Add a layer to get started.</p>
+          <p className="text-gray-500 text-sm">Add a layer or load a default layer configuration to get started.</p>
         </div>
       ) : (
         <div className="flex flex-wrap gap-4 mb-6">

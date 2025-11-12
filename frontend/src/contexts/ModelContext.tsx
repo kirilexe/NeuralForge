@@ -10,9 +10,7 @@ const ModelContext = createContext<ModelContextType | undefined>(undefined);
 
 export function ModelProvider({ children }: { children: ReactNode }) {
     const [layers, setLayers] = useState<Layer[]>([
-        { id: 1, type: 'Convolutional', outputChannels: 32, kernelSize: 3, activation: 'ReLU' },
-        { id: 2, type: 'Fully Connected', units: 128, activation: 'ReLU' },
-        { id: 3, type: 'Fully Connected', units: 10, activation: 'Softmax' },
+        // removed hardcoded layers
     ]);
 
     return(

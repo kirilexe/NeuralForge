@@ -1,9 +1,11 @@
 import React from "react";
 import ModelArchitecture from "../dashboard/ModelArchitecture";
+//@ts-ignore
 import DatasetSelector from "../dashboard/DatasetSelector";
 import SaveModel from "../dashboard/SaveModel";
 import LoadModels from "../dashboard/LoadModels";
 import { useModel } from "../../contexts/ModelContext"
+import DefaultModels from "../dashboard/DefaultModels";
 
 export default function BuildView() {
   const { layers, setLayers } = useModel();
@@ -34,6 +36,7 @@ export default function BuildView() {
           <DatasetSelector />
           <SaveModel />
           <LoadModels />
+          <DefaultModels />
         </div>
       </div>
     </div>
