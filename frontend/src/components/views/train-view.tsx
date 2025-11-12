@@ -218,22 +218,46 @@ export default function TrainView() {
               <h3 className="underline-title-text">Training Chart</h3>
               <div style={{ background: '#0b1220', padding: '12px', borderRadius: 8 }} className="text-white">
                 <LineChart
-                  series={[
-                    { data: chartLoss, label: 'Loss', yAxisId: 'leftAxisId' },
-                    { data: chartAcc, label: 'Accuracy', yAxisId: 'rightAxisId' },
-                  ]}
-                  xAxis={[{ scaleType: 'point', data: chartLoss.map((_, i) => `E${i + 1}`) }]}
-                  yAxis={[
-                    { id: 'leftAxisId', width: 50 },
-                    { id: 'rightAxisId', position: 'right' },
-                  ]}
-                  sx={{
-                    height: 350,
-                    '& .MuiChartsAxis-root .MuiChartsAxis-tickLabel': { fill: 'white' },
-                    '& .MuiChartsAxis-root .MuiChartsAxis-label': { fill: 'white' },
-                    '& .MuiChartsAxis-root line': { stroke: 'white' },
-                  }}
-                />
+                series={[
+                  { data: chartLoss, label: 'Loss', yAxisId: 'leftAxisId'},
+                  { data: chartAcc, label: 'Accuracy', yAxisId: 'rightAxisId' },
+                ]}
+                xAxis={[{ scaleType: 'point', data: chartLoss.map((_, i) => `E${i + 1}`) }]}
+                yAxis={[
+                  { id: 'leftAxisId', width: 50 },
+                  { id: 'rightAxisId', position: 'right' },
+                ]}
+                slotProps={{
+                  legend: {
+                    sx: {
+                      fontSize: 14,
+                      color: 'white'
+                    }
+                  }
+                }}
+                sx={{ 
+                  height: 350,
+                  // More specific selectors
+                  '& .MuiChartsAxis-root .MuiChartsAxis-tickLabel': {
+                    fill: 'white',
+                  },
+                  '& .MuiChartsAxis-root .MuiChartsAxis-label': {
+                    fill: 'white',
+                  },
+                  '& .MuiChartsAxis-root line': {
+                    stroke: 'white',
+                  },
+                  '& .MuiChartsAxis-root .MuiChartsAxis-line': {
+                    stroke: 'white',
+                  },
+                  '& .MuiChartsAxis-root .MuiChartsAxis-tick': {
+                    stroke: 'white',
+                  },
+                  '& .MuiChartsAxis-root text': {
+                    fill: 'white',
+                  },
+                }}
+              />
                 <span className="flex">
                   <p className="text-sm font-semibold mr-30">Loss: {chartLoss.length ? Number(chartLoss[chartLoss.length - 1]).toFixed(2) : "—"}</p>
                   <p className="text-sm font-semibold">Accuracy: {chartAcc.length ? (Number(chartAcc[chartAcc.length - 1]) * 100).toFixed(2) + "%" : "—"}</p>
