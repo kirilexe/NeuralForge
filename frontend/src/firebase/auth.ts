@@ -6,9 +6,28 @@ import {
     sendPasswordResetEmail,
     updatePassword
 } from 'firebase/auth';
+import {doc, setDoc} from 'firebase/firestore';
+import { db } from './firebase'
 
-export const doCreateUserWithEmailAndPassword = async (email: string, password: string) => {
-    return await createUserWithEmailAndPassword(auth, email, password);
+export const doCreateUserWithEmailAndPassword = async (
+  email: string,
+  password: string,
+  role: string = "user"
+) => {
+  // create user in firebase auth
+  const userCred = await createUserWithEmailAndPassword(auth, email, password);
+
+  // save role in firestore
+  try {
+    await setDoc(doc(db, "users", userCred.user.uid), {
+      email,
+      role,
+    });
+  } catch (err) {
+    console.error("Error setting user role in Firestore:", err);
+  }
+
+  return userCred;
 };
 
 export const doSignInWithEmailAndPassword = async (email: string, password: string) => {
