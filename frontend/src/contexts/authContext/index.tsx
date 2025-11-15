@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { auth } from '../../firebase/firebase';
-import { db } from '../../firebase/firebase'; // add this import
+import { db } from '../../firebase/firebase';
+
 import { 
   onAuthStateChanged, 
   updatePassword, 
@@ -10,11 +11,13 @@ import {
   createUserWithEmailAndPassword,
   signOut,
   sendPasswordResetEmail,
-  updateProfile as fbUpdateProfile
+  updateProfile as fbUpdateProfile,
+  //@ts-ignore
+  User
 } from 'firebase/auth';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, deleteDoc, collection, getDocs } from 'firebase/firestore';
 
-const AuthContext = createContext();
+const AuthContext = createContext<any>(null);
 
 export function useAuth() {
   const context = useContext(AuthContext);
@@ -24,9 +27,9 @@ export function useAuth() {
   return context;
 }
 
-export function AuthProvider({ children }) {
-  const [currentUser, setCurrentUser] = useState(null);
-  const [userRole, setUserRole] = useState(null); // 🔥 added
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
   const [userloggedin, setUserloggedin] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -35,12 +38,10 @@ export function AuthProvider({ children }) {
     return unsubscribe;
   }, []);
 
-  async function initializeUser(user) {
+  async function initializeUser(user: User | null) {
     if (user) {
       setCurrentUser(user);
       setUserloggedin(true);
-
-      // Fetch user role from Firestore
       const role = await fetchUserRole(user.uid);
       setUserRole(role);
     } else {
@@ -51,62 +52,74 @@ export function AuthProvider({ children }) {
     setLoading(false);
   }
 
-  // Helper to get user role from Firestore
-  const fetchUserRole = async (uid) => {
+  const fetchUserRole = async (uid: string) => {
     try {
       const userDoc = await getDoc(doc(db, 'users', uid));
-      if (userDoc.exists()) {
-        return userDoc.data().role || 'user';
-      }
+      if (userDoc.exists()) return userDoc.data().role || 'user';
     } catch (error) {
       console.error('Error fetching user role:', error);
     }
     return 'user';
   };
 
-  // Sign up
-  const signup = async (email, password, role = 'user') => {
+  const signup = async (email: string, password: string, role = 'user') => {
     const result = await createUserWithEmailAndPassword(auth, email, password);
-
-    // Save role to Firestore
-    await setDoc(doc(db, 'users', result.user.uid), {
-      email,
-      role,
-    });
-
+    await setDoc(doc(db, 'users', result.user.uid), { email, role });
     setUserRole(role);
     return result;
   };
 
-  // Login
-  const login = async (email, password) => {
+  const login = async (email: string, password: string) => {
     const result = await signInWithEmailAndPassword(auth, email, password);
     const role = await fetchUserRole(result.user.uid);
     setUserRole(role);
     return result;
   };
 
-  // Logout
   const logout = async () => {
     await signOut(auth);
     setUserRole(null);
   };
 
-  // Reset password
-  const resetPassword = async (email) => {
+  const resetPassword = async (email: string) => {
     await sendPasswordResetEmail(auth, email);
   };
 
-  // Update password
-  const updateUserPassword = async (currentPassword, newPassword) => {
+  const deleteUserData = async (uid: string) => {
+    // Delete all documents in "models" subcollection
+    const modelsRef = collection(db, `users/${uid}/models`);
+    const snapshot = await getDocs(modelsRef);
+    for (const docSnap of snapshot.docs) {
+      await deleteDoc(doc(modelsRef, docSnap.id));
+    }
+
+    // Delete root user document
+    await deleteDoc(doc(db, 'users', uid));
+  };
+
+  const deleteAccount = async (password: string) => {
+    if (!currentUser || !currentUser.email) throw new Error("No user is currently signed in.");
+
+    const credential = EmailAuthProvider.credential(currentUser.email, password);
+    await reauthenticateWithCredential(currentUser, credential);
+
+    const uid = currentUser.uid;
+
+    // Delete Firestore user data
+    await deleteUserData(uid);
+
+    // Delete Auth user
+    await currentUser.delete();
+  };
+
+  const updateUserPassword = async (currentPassword: string, newPassword: string) => {
     if (!currentUser?.email) throw new Error('No user is currently signed in.');
     const credential = EmailAuthProvider.credential(currentUser.email, currentPassword);
     await reauthenticateWithCredential(currentUser, credential);
     await updatePassword(currentUser, newPassword);
   };
 
-  // Update profile
-  const updateUserProfile = async (displayName, photoURL) => {
+  const updateUserProfile = async (displayName: string, photoURL: string) => {
     if (!currentUser) throw new Error('No user is currently signed in.');
     await fbUpdateProfile(currentUser, { displayName, photoURL });
     setCurrentUser({ ...currentUser, displayName, photoURL });
@@ -114,7 +127,7 @@ export function AuthProvider({ children }) {
 
   const value = {
     currentUser,
-    userRole,        
+    userRole,
     userloggedin,
     loading,
     signup,
@@ -123,6 +136,7 @@ export function AuthProvider({ children }) {
     resetPassword,
     updateUserPassword,
     updateUserProfile,
+    deleteAccount,
   };
 
   return (

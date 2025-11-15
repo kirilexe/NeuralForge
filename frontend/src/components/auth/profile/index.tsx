@@ -3,16 +3,24 @@ import { useAuth } from '../../../contexts/authContext/index';
 import React, { useState } from 'react';
 
 const ProfilePage = () => {
-  const { currentUser, userRole, updateUserPassword } = useAuth();
+  const { currentUser, userRole, updateUserPassword, deleteAccount } = useAuth();
+
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+
+  const [deletePassword, setDeletePassword] = useState('');
+  
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const [deleteError, setDeleteError] = useState('');
+  const [deleteMessage, setDeleteMessage] = useState('');
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
   //@ts-ignore
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!currentPassword) return setError("Current password is required.");
@@ -30,10 +38,9 @@ const ProfilePage = () => {
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
-    } catch (err) {
-      console.error("Password update error:", err);
-      //@ts-ignore
-      switch (err.code) {
+    } catch (err: unknown) {
+      const errorObj = err as { code?: string; message?: string };
+      switch (errorObj.code) {
         case 'auth/wrong-password':
           setError("Current password is incorrect.");
           break;
@@ -47,11 +54,45 @@ const ProfilePage = () => {
           setError("Network error. Check your connection and try again.");
           break;
         default:
-          //@ts-ignore
-          setError(err.message || "Failed to update password. Try again.");
+          setError(errorObj.message || "Failed to update password. Try again.");
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  //@ts-ignore
+  const handleDelete = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!deletePassword) return setDeleteError("Password is required to delete your account.");
+
+    try {
+      setDeleteError('');
+      setDeleteMessage('');
+      setDeleteLoading(true);
+
+      await deleteAccount(deletePassword);
+
+      setDeleteMessage("Your account has been deleted.");
+      setDeletePassword('');
+    } catch (err: unknown) {
+      const errorObj = err as { code?: string; message?: string };
+      switch (errorObj.code) {
+        case 'auth/wrong-password':
+          setDeleteError("Password is incorrect.");
+          break;
+        case 'auth/requires-recent-login':
+          setDeleteError("Please log in again and try deleting your account.");
+          break;
+        case 'auth/network-request-failed':
+          setDeleteError("Network error. Try again.");
+          break;
+        default:
+          setDeleteError(errorObj.message || "Failed to delete account.");
+      }
+    } finally {
+      setDeleteLoading(false);
     }
   };
 
@@ -59,12 +100,10 @@ const ProfilePage = () => {
     <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
       <div className="black-purple-hover-div w-full max-w-md p-6 rounded-xl space-y-6">
 
-        {/* Header */}
         <h1 className="text-3xl font-bold text-center text-indigo-200">
           Your Profile
         </h1>
 
-        {/* User Info Section */}
         <section className="space-y-3">
           <h2 className="text-xl font-semibold text-indigo-300 border-b border-indigo-700 pb-2">
             Account Details
@@ -89,13 +128,11 @@ const ProfilePage = () => {
           </div>
         </section>
 
-        {/* Password Change Form Section */}
         <section className="space-y-4 pt-4 border-t border-indigo-700">
           <h2 className="text-xl font-semibold text-indigo-300">
             Change Password
           </h2>
 
-          {/* Messages */}
           {message && (
             <div className="p-2 bg-green-900/50 border border-green-500 text-green-300 rounded-md text-sm">
               {message}
@@ -108,7 +145,6 @@ const ProfilePage = () => {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-3">
-
             <input
               type="password"
               placeholder="Current password"
@@ -148,6 +184,44 @@ const ProfilePage = () => {
             </button>
           </form>
         </section>
+
+        <section className="space-y-4 pt-4 border-t border-indigo-700">
+          <h2 className="text-xl font-semibold text-indigo-300">
+            Delete Account
+          </h2>
+
+          {deleteMessage && (
+            <div className="p-2 bg-green-900/50 border border-green-500 text-green-300 rounded-md text-sm">
+              {deleteMessage}
+            </div>
+          )}
+          {deleteError && (
+            <div className="p-2 bg-red-900/50 border border-red-500 text-red-300 rounded-md text-sm">
+              {deleteError}
+            </div>
+          )}
+
+          <form onSubmit={handleDelete} className="space-y-3">
+            <input
+              type="password"
+              placeholder="Enter your password"
+              value={deletePassword}
+              onChange={(e) => setDeletePassword(e.target.value)}
+              disabled={deleteLoading}
+              className="w-full px-3 py-2 bg-gray-900 border border-red-700 rounded-lg text-white placeholder-gray-500 focus:ring-red-500 focus:border-red-500 disabled:opacity-50"
+            />
+
+            <button
+              type="submit"
+              disabled={deleteLoading}
+              className={`w-full py-2 font-semibold rounded-lg text-center transition duration-200 ease-in-out border border-red-700 text-red-300 hover:bg-red-800/40
+                ${deleteLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+            >
+              {deleteLoading ? 'Deleting...' : 'Delete Account'}
+            </button>
+          </form>
+        </section>
+
       </div>
     </div>
   );
