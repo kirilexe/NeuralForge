@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { auth } from '../../firebase/firebase';
 import { db } from '../../firebase/firebase';
+import type { User } from "firebase/auth";
 
 import { 
   onAuthStateChanged, 
@@ -12,8 +13,6 @@ import {
   signOut,
   sendPasswordResetEmail,
   updateProfile as fbUpdateProfile,
-  //@ts-ignore
-  User
 } from 'firebase/auth';
 import { doc, getDoc, setDoc, deleteDoc, collection, getDocs } from 'firebase/firestore';
 
