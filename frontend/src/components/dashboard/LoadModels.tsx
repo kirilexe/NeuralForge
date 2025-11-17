@@ -2,9 +2,18 @@ import React, { useState, useEffect } from 'react';
 import { useModel } from '../../contexts/ModelContext';
 //@ts-ignore
 import { useAuth } from '../../contexts/authContext/index';
-import { collection, getDocs, orderBy, query } from 'firebase/firestore';
+import {
+  collection,
+  getDocs,
+  orderBy,
+  query,
+  doc,
+  deleteDoc,
+  updateDoc,
+  setDoc,
+  serverTimestamp
+} from 'firebase/firestore';
 import { db } from '../../firebase/firebase';
-import { doc, deleteDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 
 interface SavedModel {
   id: string;
@@ -15,17 +24,21 @@ interface SavedModel {
 
 export default function LoadModels() {
   const { setLayers, layers } = useModel();
-  const { currentUser, role } = useAuth();
+  const { currentUser } = useAuth();
+
   const [savedModels, setSavedModels] = useState<SavedModel[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState('');
+
   const [editingModelId, setEditingModelId] = useState<string | null>(null);
   const [editedName, setEditedName] = useState('');
 
+  // Save section states (kept identical)
+  const [modelName, setModelName] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+
   useEffect(() => {
-    if (currentUser) {
-      loadUserModels();
-    }
+    if (currentUser) loadUserModels();
   }, [currentUser]);
 
   const loadUserModels = async () => {
@@ -37,7 +50,7 @@ export default function LoadModels() {
         collection(db, 'users', currentUser.uid, 'models'),
         orderBy('createdAt', 'desc')
       );
-      
+
       const querySnapshot = await getDocs(modelsQuery);
       const models = querySnapshot.docs.map(doc => ({
         id: doc.id,
@@ -53,6 +66,41 @@ export default function LoadModels() {
     }
   };
 
+  const handleSave = async () => {
+    if (!modelName.trim()) {
+      setMessage('Model name cannot be empty.');
+      return;
+    }
+
+    if (!currentUser) {
+      setMessage('You must be logged in to save a model.');
+      return;
+    }
+
+    setIsSaving(true);
+    setMessage('');
+
+    try {
+      const modelRef = doc(collection(db, 'users', currentUser.uid, 'models'));
+      await setDoc(modelRef, {
+        name: modelName,
+        layers: layers,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      });
+
+      setMessage('Model saved successfully!');
+      setModelName('');
+
+      loadUserModels();
+    } catch (error) {
+      console.error('Error saving model: ', error);
+      setMessage('Error saving model');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const handleLoadModel = (model: SavedModel) => {
     setLayers(model.layers);
     setMessage(`Model "${model.name}" loaded successfully!`);
@@ -63,10 +111,10 @@ export default function LoadModels() {
     if (!currentUser) return;
 
     try {
-      const modelRef = doc(db, 'users', currentUser.uid, 'models', modelId);
-      await deleteDoc(modelRef);
-      
-      setSavedModels(prevModels => prevModels.filter(model => model.id !== modelId));
+      const ref = doc(db, 'users', currentUser.uid, 'models', modelId);
+      await deleteDoc(ref);
+
+      setSavedModels(prev => prev.filter(m => m.id !== modelId));
       setMessage('Model deleted successfully');
     } catch (error) {
       console.error('Error deleting model:', error);
@@ -78,23 +126,40 @@ export default function LoadModels() {
     if (!currentUser) return;
 
     try {
-      const modelRef = doc(db, 'users', currentUser.uid, 'models', modelId); // Fixed: currentUser.uid instead of currentUser.id
-      await updateDoc(modelRef, {
-        name: newName
-      });
+      const ref = doc(db, 'users', currentUser.uid, 'models', modelId);
+      await updateDoc(ref, { name: newName });
 
-      setSavedModels(prevModels =>
-        prevModels.map(model =>
+      setSavedModels(prev =>
+        prev.map(model =>
           model.id === modelId ? { ...model, name: newName } : model
         )
       );
 
       setMessage(`Saved model renamed to "${newName}" successfully!`);
       setTimeout(() => setMessage(''), 3000);
-
     } catch (error) {
       console.error('Error renaming model: ', error);
       setMessage('Error renaming model.');
+    }
+  };
+
+  const handleOverwriteModel = async (modelId: string) => {
+    if (!currentUser) return;
+
+    try {
+      const ref = doc(db, 'users', currentUser.uid, 'models', modelId);
+
+      await updateDoc(ref, {
+        layers,
+        updatedAt: serverTimestamp()
+      });
+
+      const name = savedModels.find(m => m.id === modelId)?.name;
+      setMessage(`Model "${name}" overwritten successfully!`);
+      setTimeout(() => setMessage(''), 3000);
+    } catch (error) {
+      console.error('Error overwriting model:', error);
+      setMessage('Error overwriting model');
     }
   };
 
@@ -108,51 +173,18 @@ export default function LoadModels() {
     setEditedName('');
   };
 
-  const saveEditing = async (modelId: string) => {
-    if (editedName.trim() && editedName !== savedModels.find(m => m.id === modelId)?.name) {
-      await handleEditModelName(modelId, editedName.trim());
+  const saveEditing = async (id: string) => {
+    if (editedName.trim()) {
+      await handleEditModelName(id, editedName.trim());
     }
     setEditingModelId(null);
     setEditedName('');
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent, modelId: string) => {
-    if (e.key === 'Enter') {
-      saveEditing(modelId);
-    } else if (e.key === 'Escape') {
-      cancelEditing();
-    }
+  const handleKeyPress = (e: React.KeyboardEvent, id: string) => {
+    if (e.key === 'Enter') saveEditing(id);
+    if (e.key === 'Escape') cancelEditing();
   };
-
-  const handleOverwriteModel = async (modelId: string) => {
-  if (!currentUser) return;
-
-  try {
-    const modelRef = doc(db, 'users', currentUser.uid, 'models', modelId);
-    
-    // Get current layers from the model context
-    const currentLayers = layers; // This comes from your useModel hook
-    
-    await updateDoc(modelRef, {
-      layers: currentLayers,
-      updatedAt: serverTimestamp() // Use serverTimestamp like in your save function
-    });
-
-    // Update local state
-    setSavedModels(prevModels =>
-      prevModels.map(model =>
-        model.id === modelId ? { ...model, layers: currentLayers } : model
-      )
-    );
-
-    const modelName = savedModels.find(m => m.id === modelId)?.name;
-    setMessage(`Model "${modelName}" overwritten successfully!`);
-    setTimeout(() => setMessage(''), 3000);
-  } catch (error) {
-    console.error('Error overwriting model:', error);
-    setMessage('Error overwriting model');
-  }
-};
 
   if (!currentUser) {
     return (
@@ -165,19 +197,44 @@ export default function LoadModels() {
 
   return (
     <div className="w-full p-4 bg-[#1e2538] rounded-md border border-[#374151] shadow-2xl">
-      <div className="flex justify-between items-center mb-4">
-        <h3 className="text-xl font-semibold text-white">Your Models</h3>
+
+      {/* -------------------------------- */}
+      {/* 🔹 ORIGINAL SAVE MODEL UI (UNTOUCHED) */}
+      {/* -------------------------------- */}
+
+      <h3>Save Model</h3>
+      <div className="mb-6">
+        <input
+          type="text"
+          placeholder="Enter model name"
+          value={modelName}
+          onChange={(e) => setModelName(e.target.value)}
+          className="w-full px-3 py-1.5 bg-[#1a1a1a] text-white text-sm rounded-md 
+            border border-transparent outline-none transition-all duration-150 
+            hover:border-[#a78bfa] focus:border-[#a78bfa] mb-2"
+        />
         <button
-          onClick={loadUserModels}
-          disabled={isLoading}
-          className="flex items-center space-x-1 px-4 py-2 text-sm font-medium text-white bg-[#1f2937] border border-purple-500 rounded-lg hover:bg-purple-900/20 transition-colors duration-200 disabled:opacity-50"
+          onClick={handleSave}
+          disabled={isSaving || !modelName.trim()}
+          className="px-4 py-2 text-sm font-medium bg-[#334155] hover:bg-[#3f4f62] 
+            text-white rounded-lg
+            transition-all duration-200 ease-out
+            border border-white/5 hover:border-white/10"
         >
-          {isLoading ? 'Loading...' : 'Refresh'}
+          {isSaving ? 'Saving...' : 'Save Model'}
         </button>
       </div>
 
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="text-xl font-semibold text-white">Your Models</h3>
+      </div>
+
       {message && (
-        <p className={`mb-4 text-sm ${message.includes('Error') ? 'text-red-400' : 'text-green-400'}`}>
+        <p
+          className={`mb-4 text-sm ${
+            message.includes('Error') ? 'text-red-400' : 'text-green-400'
+          }`}
+        >
           {message}
         </p>
       )}
@@ -188,7 +245,7 @@ export default function LoadModels() {
         <p className="text-gray-400">No saved models found</p>
       ) : (
         <div className="space-y-3">
-          {savedModels.map((model) => (
+          {savedModels.map(model => (
             <div
               key={model.id}
               className="flex justify-between items-center p-4 bg-[#0f0f0f] rounded-lg border border-[#4a6380]/40 shadow-md transition-all hover:border-purple-500/40"
@@ -207,7 +264,6 @@ export default function LoadModels() {
                     <button
                       onClick={() => saveEditing(model.id)}
                       className="p-1 text-green-400 hover:text-green-300 transition-colors"
-                      aria-label="Save"
                     >
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -216,7 +272,6 @@ export default function LoadModels() {
                     <button
                       onClick={cancelEditing}
                       className="p-1 text-red-400 hover:text-red-300 transition-colors"
-                      aria-label="Cancel"
                     >
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -225,11 +280,12 @@ export default function LoadModels() {
                   </div>
                 ) : (
                   <div className="flex items-center space-x-2">
-                    <strong className="text-[#a78bfa] text-base font-medium block">{model.name}</strong>
+                    <strong className="text-[#a78bfa] text-base font-medium block">
+                      {model.name}
+                    </strong>
                     <button
                       onClick={() => startEditing(model)}
                       className="p-1 text-gray-400 hover:text-yellow-400 transition-colors"
-                      aria-label="Edit Name"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -237,18 +293,19 @@ export default function LoadModels() {
                     </button>
                   </div>
                 )}
+
                 <p className="mt-1 text-xs text-gray-400">
-                  {model.layers.length} layers • 
+                  {model.layers.length} layers •
                   {model.createdAt?.toDate?.()?.toLocaleDateString() || 'Unknown date'}
                 </p>
               </div>
+
               <div className="flex space-x-2">
                 {editingModelId !== model.id && (
                   <>
                     <button
                       onClick={() => handleDeleteModel(model.id)}
                       className="flex items-center justify-center p-2 text-white bg-red-900/40 border border-red-500 rounded-lg hover:bg-red-700/60 transition-colors duration-200"
-                      aria-label="Delete Model"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path
@@ -259,21 +316,17 @@ export default function LoadModels() {
                         />
                       </svg>
                     </button>
+
                     <button
                       onClick={() => handleOverwriteModel(model.id)}
-                      className="px-4 py-2 text-sm font-medium bg-[#334155] hover:bg-[#3f4f62] 
-                         text-white text-sm font-medium rounded-lg
-                         transition-all duration-200 ease-out
-                         border border-white/5 hover:border-white/10"
+                      className="px-4 py-2 text-sm font-medium bg-[#334155] hover:bg-[#3f4f62] text-white rounded-lg border border-white/5 hover:border-white/10"
                     >
                       Overwrite
                     </button>
+
                     <button
                       onClick={() => handleLoadModel(model)}
-                      className="px-4 py-2 text-sm font-medium bg-[#334155] hover:bg-[#3f4f62] 
-                         text-white text-sm font-medium rounded-lg
-                         transition-all duration-200 ease-out
-                         border border-white/5 hover:border-white/10"
+                      className="px-4 py-2 text-sm font-medium bg-[#334155] hover:bg-[#3f4f62] text-white rounded-lg border border-white/5 hover:border-white/10"
                     >
                       Load
                     </button>
