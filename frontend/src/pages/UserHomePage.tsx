@@ -19,7 +19,7 @@ function UserHomePage() {
     },
     {
       id: 2,
-      title: "Text Prediction NN",
+      title: "Text Prediction NN (placeholder)",
       description: "Create recurrent neural networks for text generation and prediction. Ideal for NLP applications.",
       status: "coming-soon",
       icon: "📝",
@@ -29,7 +29,7 @@ function UserHomePage() {
 
   return (
     <div className="min-h-screen w-full bg-[#060010] text-white pt-24 px-6 relative">
-      {/* Orb with lower z-index */}
+      {/* that's not an orb anymore fix the import later */}
       <div className="">
         <Orb />
       </div>

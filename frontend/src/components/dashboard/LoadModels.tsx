@@ -198,9 +198,6 @@ export default function LoadModels() {
   return (
     <div className="w-full p-4 bg-[#1e2538] rounded-md border border-[#374151] shadow-2xl">
 
-      {/* -------------------------------- */}
-      {/* 🔹 ORIGINAL SAVE MODEL UI (UNTOUCHED) */}
-      {/* -------------------------------- */}
 
       <h3>Save Model</h3>
       <div className="mb-6">

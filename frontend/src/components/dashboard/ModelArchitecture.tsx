@@ -101,7 +101,7 @@ export default function ModelArchitecture({ layers, setLayers }: ModelArchitectu
               explanation="A layer that connects every neuron in one layer to every neuron in the next layer."
               smaller="Fewer layers may miss important features but train faster."
               bigger="More layers would increase training time."
-              recommendation="Connect all neurons from the previous layer to this one. Commonly used towards the end of the network. Example - 2 convolutional layers, followed by ***1 fully connected layer***. All the neurons connect, reassuring confidence in the final output."
+              recommendation="Connect all neurons from the previous layer to this one. Commonly used towards the end of the network. Example - 2 convolutional layers, followed by 1 fully connected layer. All the neurons connect, reassuring confidence in the final output."
               position="top" 
             />
         <button 
