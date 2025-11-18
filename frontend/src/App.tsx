@@ -12,6 +12,8 @@ import { useState, useEffect } from 'react';
 import ProfilePage from './components/auth/profile/index'; 
 //@ts-ignore
 import { AuthProvider, useAuth } from './contexts/authContext/index';
+//@ts-ignore
+import AdminPanel from './pages/AdminPanel'
 
 // Create a separate component that uses the useAuth hook
 function AppContent() {
@@ -26,6 +28,7 @@ function AppContent() {
     else if (path === '/register') setCurrentPage('register');
     else if (path === '/signout') setCurrentPage('signout');
     else if (path === '/profile') setCurrentPage('profile');
+    else if (path === '/adminpanel') setCurrentPage('adminpanel');
     else if (!currentUser) setCurrentPage('home');
     else setCurrentPage('loggeduser');
   }, [currentUser]); // Add currentUser as dependency
@@ -51,6 +54,8 @@ function AppContent() {
         return <ProfilePage />;
       case 'loggeduser':
         return <UserHomePage />;
+      case 'adminpanel':
+        return <AdminPanel />;
       case 'home':
       default:
         return <Home />;

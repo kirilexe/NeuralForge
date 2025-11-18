@@ -15,6 +15,7 @@ import {
   updateProfile as fbUpdateProfile,
 } from 'firebase/auth';
 import { doc, getDoc, setDoc, deleteDoc, collection, getDocs } from 'firebase/firestore';
+import { getFunctions, httpsCallable } from 'firebase/functions';
 
 const AuthContext = createContext<any>(null);
 
@@ -111,6 +112,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await currentUser.delete();
   };
 
+  const adminDeleteAccount = async (targetUid: string) => {
+  if (!targetUid) {
+    throw new Error("Target user ID is required for deletion.");
+  }
+  
+  const functions = getFunctions();
+  const deleteUserFunction = httpsCallable(functions, 'adminDeleteUser');
+
+  try {
+    const result = await deleteUserFunction({ uid: targetUid });
+    
+    console.log('User deleted successfully:', result.data);
+    //@ts-ignore
+    return { success: true, message: result.data.message };
+
+  } catch (error) {
+    console.error("Admin user deletion failed:", error);
+    //@ts-ignore
+    throw new Error(`Failed to delete account: ${error.message || 'Check Cloud Function logs.'}`);
+  }
+};
+
+
+
   const updateUserPassword = async (currentPassword: string, newPassword: string) => {
     if (!currentUser?.email) throw new Error('No user is currently signed in.');
     const credential = EmailAuthProvider.credential(currentUser.email, currentPassword);
@@ -136,6 +161,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     updateUserPassword,
     updateUserProfile,
     deleteAccount,
+    adminDeleteAccount,
   };
 
   return (
