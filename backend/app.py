@@ -84,6 +84,7 @@ def train_stream():
         "optimizer": "Adam"
     }
     training_config = data.get('training_config', default_config)
+    print(f"DEBUG: Received training config: {training_config}")
 
     def generate():
         for message in train_generator(model_layers, training_config):

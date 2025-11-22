@@ -23,6 +23,7 @@ export default function TrainView() {
     learningRate: 0.001,
     optimizer: 'Adam',
   });
+  const [demoMode, setDemoMode] = useState(false); // Added demo mode state
   const lossHistoryRef = useRef<number[]>([]);
   const accuracyHistoryRef = useRef<number[]>([]);
   const [chartLoss, setChartLoss] = useState<number[]>([]);
@@ -73,7 +74,7 @@ export default function TrainView() {
         const { id, ...rest } = layer;
         return rest;
       }),
-      training_config: config,
+      training_config: { ...config, demo_mode: demoMode },
     };
     try {
       const response = await fetch('http://127.0.0.1:5000/train_stream', {
@@ -191,6 +192,19 @@ export default function TrainView() {
                 <option>RMSprop</option>
               </select>
             </label>
+          </div>
+
+          <div style={{ marginBottom: '20px' }}>
+             <label className="flex items-center space-x-2 cursor-pointer">
+               <input 
+                 type="checkbox" 
+                 checked={demoMode} 
+                 onChange={(e) => setDemoMode(e.target.checked)}
+                 disabled={isTraining}
+                 className="form-checkbox h-4 w-4 text-purple-600 transition duration-150 ease-in-out"
+               />
+               <span className="text-xs font-medium text-gray-400">Demo Mode (Fast Training)</span>
+             </label>
           </div>
 
           <button onClick={() => { clearGraph(); startTraining(); }} disabled={isTraining} className="btn-transparent-white">

@@ -10,6 +10,46 @@
 const {setGlobalOptions} = require("firebase-functions");
 const {onRequest} = require("firebase-functions/https");
 const logger = require("firebase-functions/logger");
+const functions = require("firebase-functions");
+const admin = require("firebase-admin");
+
+admin.initializeApp();
+
+exports.adminDeleteUser = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError(
+      "unauthenticated",
+      "Authentication required."
+    );
+  }
+
+  const { uid: targetUid } = data;
+
+  if (!targetUid) {
+    throw new functions.https.HttpsError(
+      "invalid-argument",
+      "Target user ID is required."
+    );
+  }
+
+  try {
+    await admin.auth().deleteUser(targetUid);
+    
+    return {
+      success: true,
+      message: "User deleted successfully."
+    };
+
+  } catch (error) {
+    throw new functions.https.HttpsError(
+      "internal",
+      error.message || "Failed to delete user."
+    );
+  }
+});
+
+
+
 
 // For cost control, you can set the maximum number of containers that can be
 // running at the same time. This helps mitigate the impact of unexpected

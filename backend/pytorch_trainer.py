@@ -241,7 +241,12 @@ def train_model(layers, config, progress_callback=None):
         return [f"ERROR: Could not build model. Details: {e}"], 0.0, 0.0
     
     # Rest of the function remains exactly the same...
-    subset_indices = torch.randperm(len(train_dataset))[:5000] 
+    subset_indices = torch.randperm(len(train_dataset))
+    
+    # Check for demo mode
+    if config.get('demo_mode', False):
+        print("⚠️ DEMO MODE: Using only 5000 samples")
+        subset_indices = subset_indices[:5000] #[:5000] # for demo mode, use only 5000
     train_subset = torch.utils.data.Subset(train_dataset, subset_indices)
     
     batch_size = config.get('batchSize', 64)

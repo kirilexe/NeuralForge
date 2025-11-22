@@ -1,11 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { collection, onSnapshot } from 'firebase/firestore';
-import { db } from '../firebase/firebase'
+import { db } from '../firebase/firebase';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 
-/**
- * @param {string} targetUid 
- */
 const adminDeleteAccount = async (targetUid) => {
     if (!targetUid) {
         throw new Error("Target user ID is required for deletion.");
@@ -17,20 +14,14 @@ const adminDeleteAccount = async (targetUid) => {
     try {
         const result = await deleteUserFunction({ uid: targetUid });
         console.log('User deleted successfully:', result.data);
-        // @ts-ignore
         return { success: true, message: result.data.message };
-
     } catch (error) {
         console.error("Admin user deletion failed:", error);
-        // @ts-ignore
         throw new Error(`Failed to delete account: ${error.message || 'Check Cloud Function logs.'}`);
     }
 };
 
-
-function UserTable({ users, onDeleteUser }) {
-    const handlePromotePlaceholder = (user) => console.log(`Placeholder: Promoting user ${user.email}`);
-
+function UserTable({ users, onDeleteUser, isDeleting }) {
     const handleDelete = (user) => {
         if (window.confirm(`Are you sure you want to delete ${user.email}? This action is permanent.`)) {
             onDeleteUser(user);
@@ -63,24 +54,17 @@ function UserTable({ users, onDeleteUser }) {
                                     {user.role || 'standard'}
                                 </span>
                             </td>
-                            <td className="px-4 py-4 flex gap-2">
-                                {user.role !== 'admin' && (
-                                    <button 
-                                        onClick={() => handlePromotePlaceholder(user)}
-                                        className="flex items-center gap-1 px-3 py-1.5 bg-transparent text-white text-xs font-medium rounded-lg 
-                                                    border border-white/30 hover:bg-white/10 transition duration-150"
-                                    >
-                                        Promote
-                                    </button>
-                                )}
-                                
-
+                            <td className="px-4 py-4">
                                 <button 
                                     onClick={() => handleDelete(user)}
-                                    className="flex items-center gap-1 px-3 py-1.5 bg-red-700/50 hover:bg-red-700 
-                                               text-white text-xs font-medium rounded-lg transition-all duration-200"
+                                    disabled={isDeleting}
+                                    className={`flex items-center gap-1 px-3 py-1.5 text-white text-xs font-medium rounded-lg transition-all duration-200 ${
+                                        isDeleting
+                                            ? 'bg-gray-600 cursor-not-allowed'
+                                            : 'bg-red-700/50 hover:bg-red-700'
+                                    }`}
                                 >
-                                    Delete
+                                    {isDeleting ? 'Deleting...' : 'Delete'}
                                 </button>
                             </td>
                         </tr>
@@ -108,7 +92,6 @@ function AdminPanel() {
                     id: doc.id,
                     ...doc.data()
                 }));
-                // @ts-ignore
                 setUsers(usersList);
                 setIsLoading(false);
             },
@@ -120,9 +103,7 @@ function AdminPanel() {
         );
 
         return () => unsubscribe();
-
-    }, [])
-
+    }, []);
 
     const handleDeleteUser = async (user) => {
         setIsDeleting(true);
@@ -130,19 +111,13 @@ function AdminPanel() {
         try {
             await adminDeleteAccount(user.id);
             setDeleteMessage({ type: 'success', text: `User ${user.email} deleted successfully.` });
-            
-
         } catch (err) {
-            console.error("Deletion Error:", err);
-            // @ts-ignore
             setDeleteMessage({ type: 'error', text: err.message || 'An unknown error occurred during deletion.' });
         } finally {
             setIsDeleting(false);
-            // Clear the message after a few seconds for better UX
-            setTimeout(() => setDeleteMessage(null), 5000); 
+            setTimeout(() => setDeleteMessage(null), 5000);
         }
     };
-
 
     return (
         <div className="bg-[#1e2538] rounded-md p-6 border border-white/10">
@@ -163,12 +138,11 @@ function AdminPanel() {
                 </div>
             )}
             
-            {isLoading || isDeleting ? (
+            {isLoading ? (
                 <div className="text-center py-12 border-2 border-dashed border-white/10 rounded-lg">
-                    <p className="text-gray-400 text-sm">{isDeleting ? 'Deleting user...' : 'Loading user data...'}</p>
+                    <p className="text-gray-400 text-sm">Loading user data...</p>
                 </div>
             ) : error ? (
-                // Error State
                 <div className="text-center py-6 border-2 border-dashed border-red-500/50 rounded-lg bg-red-900/10">
                     <p className="text-red-400 text-sm">Error: {error}</p>
                 </div>
@@ -180,23 +154,14 @@ function AdminPanel() {
                     <p className="text-gray-400 text-sm">No users found in the database.</p>
                 </div>
             ) : (
-                <UserTable users={users} onDeleteUser={handleDeleteUser} />
+                <UserTable 
+                    users={users} 
+                    onDeleteUser={handleDeleteUser} 
+                    isDeleting={isDeleting}
+                />
             )}
-            
-            <div className="flex gap-3 pt-4 border-t border-white/10 mt-6">
-                <button 
-                    onClick={() => console.log('Invite user flow')}
-                    className="flex items-center gap-2 px-4 py-2.5 bg-[#334155] hover:bg-[#3f4f62] 
-                                text-white text-sm font-medium rounded-lg
-                                transition-all duration-200 ease-out
-                                border border-white/5 hover:border-white/10"
-                >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zm-8 12h8a2 2 0 002-2v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2a2 2 0 002 2z" /></svg>
-                    Invite New User
-                </button>
-            </div>
         </div>
     );
-};
+}
 
 export default AdminPanel;
